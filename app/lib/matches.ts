@@ -109,9 +109,10 @@ export async function setPredictionsOpenSetting(isOpen: boolean): Promise<boolea
       predictions_open: isOpen,
       updated_at: new Date().toISOString(),
     }, {
-      onConflict: ["id"],
-      returning: "representation",
-    });
+      onConflict: "id",
+    })
+    .select("*")
+    .single();
 
   if (error) {
     console.error("Erro ao atualizar status de palpites:", error);

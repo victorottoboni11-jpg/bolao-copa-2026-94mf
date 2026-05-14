@@ -41,8 +41,8 @@ export function MatchCard({
   };
 
   useEffect(() => {
-    setHome(predictedHome ?? 0);
-    setAway(predictedAway ?? 0);
+    setHome(() => predictedHome ?? 0);
+    setAway(() => predictedAway ?? 0);
   }, [predictedHome, predictedAway]);
 
   const homeTeamResolved =

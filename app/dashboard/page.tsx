@@ -10,13 +10,13 @@ import { getPredictionsOpenSetting } from "@/app/lib/matches";
 import { MatchCard } from "@/app/components/MatchCard";
 import { Toast } from "@/app/components/Toast";
 import { calculateMatchPoints } from "@/app/lib/scoring";
-import type { Match, Prediction } from "@/app/types";
+import type { Match, Prediction, RankingEntry } from "@/app/types";
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
   const [matches, setMatches] = useState<Match[]>([]);
   const [predictions, setPredictions] = useState<Record<string, Prediction>>({});
-  const [ranking, setRanking] = useState<any[]>([]);
+  const [ranking, setRanking] = useState<RankingEntry[]>([]);
   const [predictionsOpen, setPredictionsOpen] = useState(true);
   const [loadingData, setLoadingData] = useState(true);
   const [savingMatchId, setSavingMatchId] = useState<string | null>(null);
@@ -175,8 +175,8 @@ export default function DashboardPage() {
                       <MatchCard
                         key={match.id}
                         match={match}
-                        homeTeam={typeof match.home_team === "object" ? match.home_team : undefined}
-                        awayTeam={typeof match.away_team === "object" ? match.away_team : undefined}
+                        homeTeam={typeof match.home_team === "object" && match.home_team ? match.home_team : undefined}
+                        awayTeam={typeof match.away_team === "object" && match.away_team ? match.away_team : undefined}
                         isEditable={!locked}
                         locked={locked}
                         lockMessage={locked ? "Palpite encerrado para este confronto." : undefined}
@@ -204,8 +204,8 @@ export default function DashboardPage() {
                       <MatchCard
                         key={match.id}
                         match={match}
-                        homeTeam={typeof match.home_team === "object" ? match.home_team : undefined}
-                        awayTeam={typeof match.away_team === "object" ? match.away_team : undefined}
+                        homeTeam={typeof match.home_team === "object" && match.home_team ? match.home_team : undefined}
+                        awayTeam={typeof match.away_team === "object" && match.away_team ? match.away_team : undefined}
                         isEditable={false}
                         predictedHome={prediction?.predicted_home}
                         predictedAway={prediction?.predicted_away}

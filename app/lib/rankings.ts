@@ -50,7 +50,7 @@ export async function recalculateRankings(): Promise<RankingEntry[]> {
 
   const { error } = await supabase
     .from("rankings")
-    .upsert(upsertRows, { onConflict: ["user_id"], returning: "minimal" });
+    .upsert(upsertRows, { onConflict: "user_id" });
 
   if (error) {
     console.error("Erro ao recalcular ranking:", error);

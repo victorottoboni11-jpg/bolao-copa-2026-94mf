@@ -83,10 +83,10 @@ export type PreCopaPrediction = {
   id: string;
   user_id: string;
   champion_team: string;
+  runner_up_team: string;
   golden_ball_player: string;
   top_scorer_player: string;
   top_scorer_goals: number;
-  best_goalkeeper_player: string;
   most_assists_player: string;
   most_assists_count: number;
   fair_play_team: string;
@@ -114,7 +114,7 @@ export type RankingEntry = {
   rank: number;
   user_id: string;
   user_name: string;
-  user_email: string;
+  user_email?: string | null;
   user_avatar?: string | null;
   total_points: number;
   pre_copa_points: number;

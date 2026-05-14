@@ -56,7 +56,7 @@ export async function savePrediction(
           updated_at: new Date().toISOString(),
         },
       ],
-      { onConflict: ["user_id", "match_id"], returning: "representation" }
+      { onConflict: "user_id,match_id" }
     )
     .select("*")
     .single();

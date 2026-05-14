@@ -27,10 +27,10 @@ export async function savePreCopaPrediction(
         {
           user_id: userId,
           champion_team: values.champion_team,
-          runner_up: values.runner_up,
+          runner_up_team: values.runner_up_team,
+          golden_ball_player: values.golden_ball_player,
           top_scorer_player: values.top_scorer_player,
           top_scorer_goals: values.top_scorer_goals,
-          best_goalkeeper_player: values.best_goalkeeper_player,
           most_assists_player: values.most_assists_player,
           most_assists_count: values.most_assists_count,
           fair_play_team: values.fair_play_team,
@@ -38,7 +38,7 @@ export async function savePreCopaPrediction(
           updated_at: new Date().toISOString(),
         },
       ],
-      { onConflict: ["user_id"], returning: "representation" }
+      { onConflict: "user_id" }
     )
     .select("*")
     .single();
