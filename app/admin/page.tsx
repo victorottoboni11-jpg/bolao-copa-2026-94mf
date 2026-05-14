@@ -1,0 +1,247 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useIsAdmin } from "@/app/lib/useIsAdmin";
+import { useAuth } from "@/app/lib/auth";
+import { AdminPanel } from "@/app/components/AdminPanel";
+import { Toast } from "@/app/components/Toast";
+import { fetchAdminMatches, updateMatchScore, finalizeMatch, getPredictionsOpenSetting, setPredictionsOpenSetting } from "@/app/lib/matches";
+import { recalculateRankings } from "@/app/lib/rankings";
+import { importCopa2026Data, checkCopa2026Imported } from "@/app/lib/importCopa2026";
+import type { Match } from "@/app/types";
+
+export default function AdminPage() {
+  const { user, loading } = useAuth();
+  const isAdmin = useIsAdmin();
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
+  const [isBusy, setIsBusy] = useState(false);
+  const [message, setMessage] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
+  const [predictionsOpen, setPredictionsOpen] = useState(true);
+  const [imported, setImported] = useState(false);
+
+  useEffect(() => {
+    if (!user || !isAdmin) return;
+
+    const loadAdminData = async () => {
+      setLoadingData(true);
+      try {
+        const [matchList, open, alreadyImported] = await Promise.all([
+          fetchAdminMatches(),
+          getPredictionsOpenSetting(),
+          checkCopa2026Imported(),
+        ]);
+        setMatches(matchList);
+        setPredictionsOpen(open);
+        setImported(alreadyImported);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoadingData(false);
+      }
+    };
+
+    loadAdminData();
+  }, [user, isAdmin]);
+
+  const showToast = (type: "success" | "error" | "info", text: string) => {
+    setMessage({ type, text });
+    window.setTimeout(() => setMessage(null), 4500);
+  };
+
+  const handleImport = async () => {
+    setIsBusy(true);
+    try {
+      const alreadyImported = await checkCopa2026Imported();
+      if (alreadyImported) {
+        showToast("info", "Importação já realizada anteriormente.");
+        setImported(true);
+        return;
+      }
+      await importCopa2026Data();
+      showToast("success", "Dados da Copa importados com sucesso.");
+      setImported(true);
+      const matchList = await fetchAdminMatches();
+      setMatches(matchList);
+    } catch (error) {
+      showToast("error", "Falha ao importar dados da Copa.");
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  const handleTogglePredictions = async () => {
+    setIsBusy(true);
+    try {
+      const nextState = !predictionsOpen;
+      const success = await setPredictionsOpenSetting(nextState);
+      if (success) {
+        setPredictionsOpen(nextState);
+        showToast("success", `Palpites ${nextState ? "abertos" : "fechados"} com sucesso.`);
+      } else {
+        showToast("error", "Não foi possível alterar o status dos palpites.");
+      }
+    } catch (error) {
+      showToast("error", "Erro ao atualizar status de palpites.");
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  const handleRecalculateRanking = async () => {
+    setIsBusy(true);
+    try {
+      await recalculateRankings();
+      showToast("success", "Ranking recalculado com sucesso.");
+    } catch (error) {
+      showToast("error", "Erro ao recalcular ranking.");
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  const handleUpdateScore = async (matchId: string, homeScore: number, awayScore: number) => {
+    setIsBusy(true);
+    try {
+      const success = await updateMatchScore(matchId, homeScore, awayScore);
+      if (!success) {
+        showToast("error", "Falha ao atualizar o placar.");
+      } else {
+        showToast("success", "Placar atualizado com sucesso.");
+        setMatches((current) =>
+          current.map((match) =>
+            match.id === matchId ? { ...match, home_score: homeScore, away_score: awayScore } : match
+          )
+        );
+      }
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  const handleFinalizeMatch = async (matchId: string) => {
+    setIsBusy(true);
+    try {
+      const success = await finalizeMatch(matchId);
+      if (!success) {
+        showToast("error", "Não foi possível finalizar essa partida. Verifique se o placar está definido.");
+        return;
+      }
+      showToast("success", "Partida finalizada e bloqueada com sucesso.");
+      setMatches((current) => current.map((match) => (match.id === matchId ? { ...match, is_finished: true, status: "finished" } : match)));
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  if (loading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#04070f] px-4 py-8 text-white">
+        <div className="text-center space-y-4">
+          <div className="w-14 h-14 rounded-full border-4 border-[#00ffb2]/30 border-t-[#00ffb2] animate-spin mx-auto"></div>
+          <p className="text-[#00b2ff] font-semibold">Validando acesso…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <main className="min-h-screen bg-[#04070f] px-4 py-8 text-white">
+        <div className="mx-auto max-w-3xl rounded-3xl border border-[#00ffb2]/20 bg-slate-950/90 p-10 text-center">
+          <h1 className="text-2xl font-bold">Acesso Negado</h1>
+          <p className="mt-4 text-slate-400">Esta área é exclusiva para administradores.</p>
+          <Link href="/" className="mt-6 inline-flex rounded-2xl bg-[#00ffb2] px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-[#8bfcc7]">
+            Voltar para o painel
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-full bg-[radial-gradient(circle_at_top,_rgba(0,255,178,0.14),_transparent_28%),_linear-gradient(180deg,#04070f_0%,#070b16_100%)] px-4 py-8 text-white">
+      {message ? <Toast type={message.type} message={message.text} /> : null}
+      <div className="mx-auto max-w-6xl space-y-8">
+        <header className="rounded-2xl border border-[#00ffb2]/20 bg-gradient-to-br from-[#081116] to-[#070b16] p-6 shadow-lg">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-widest text-[#00ffb2]">Administração</p>
+              <h1 className="mt-2 text-3xl font-bold text-white">Painel de Controle</h1>
+              <p className="mt-1 text-sm text-gray-400">Importe, finalize partidas, recalcule rankings e gerencie palpites.</p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Link href="/" className="rounded-2xl border border-[#00ffb2]/20 bg-white/5 px-4 py-2 text-sm text-white hover:bg-white/10">
+                Voltar ao início
+              </Link>
+              <Link href="/pre-copa" className="rounded-2xl bg-[#00b2ff] px-4 py-2 text-sm font-semibold text-black hover:bg-[#8bc8ff]">
+                Palpites Pré-Copa
+              </Link>
+            </div>
+          </div>
+        </header>
+
+        <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="space-y-4">
+            <div className="rounded-3xl border border-[#00ffb2]/20 bg-slate-950/90 p-6">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-xl font-semibold text-white">Ações rápidas</h2>
+                  <p className="mt-1 text-sm text-slate-400">Use os controles abaixo para administrar o bolão.</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={handleImport}
+                    disabled={isBusy}
+                    className="rounded-2xl bg-gradient-to-r from-[#00ffb2] to-[#00b2ff] px-4 py-3 text-sm font-semibold text-slate-950 hover:shadow-lg hover:shadow-[#00ffb2]/30 disabled:opacity-60"
+                  >
+                    {imported ? "Dados importados" : "Importar Copa 2026"}
+                  </button>
+                  <button
+                    onClick={handleTogglePredictions}
+                    disabled={isBusy}
+                    className="rounded-2xl border border-[#00ffb2]/20 bg-[#081116] px-4 py-3 text-sm text-[#00ffb2] hover:bg-[#0c1621] disabled:opacity-60"
+                  >
+                    {predictionsOpen ? "Fechar palpites" : "Abrir palpites"}
+                  </button>
+                  <button
+                    onClick={handleRecalculateRanking}
+                    disabled={isBusy}
+                    className="rounded-2xl border border-[#00ffb2]/20 bg-[#04070f] px-4 py-3 text-sm text-[#00ffb2] hover:bg-[#0b1a25] disabled:opacity-60"
+                  >
+                    Recalcular ranking
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <AdminPanel jogos={matches} onUpdateScore={handleUpdateScore} onMarkFinished={handleFinalizeMatch} isBusy={isBusy} />
+          </div>
+
+          <aside className="space-y-4">
+            <div className="rounded-3xl border border-[#00ffb2]/20 bg-slate-950/90 p-6">
+              <h3 className="text-lg font-semibold text-[#00ffb2]">Status do sistema</h3>
+              <div className="mt-4 space-y-3 text-sm text-slate-300">
+                <p>
+                  <span className="font-semibold text-white">Previsão de palpites:</span> {predictionsOpen ? "Aberto" : "Fechado"}
+                </p>
+                <p>
+                  <span className="font-semibold text-white">Importação:</span> {imported ? "Concluída" : "Não realizada"}
+                </p>
+                <p>
+                  <span className="font-semibold text-white">Jogos carregados:</span> {matches.length}
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-[#00ffb2]/20 bg-slate-950/90 p-6">
+              <h3 className="text-lg font-semibold text-white">Admin log</h3>
+              <p className="mt-3 text-sm text-slate-400">Apenas administradores conseguem ver esta página. Os controles aqui são definitivos.</p>
+            </div>
+          </aside>
+        </section>
+      </div>
+    </main>
+  );
+}
