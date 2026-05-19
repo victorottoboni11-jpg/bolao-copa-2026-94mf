@@ -16,6 +16,19 @@ export async function getPreCopaPrediction(userId: string): Promise<PreCopaPredi
   return data || null;
 }
 
+export function canEditPreCopaPrediction(lockDate?: string | null): boolean {
+  if (!lockDate) {
+    return true;
+  }
+
+  const deadline = new Date(lockDate);
+  if (Number.isNaN(deadline.getTime())) {
+    return true;
+  }
+
+  return new Date() < deadline;
+}
+
 export async function savePreCopaPrediction(
   userId: string,
   values: Omit<PreCopaPrediction, "id" | "user_id" | "created_at" | "updated_at" | "points">

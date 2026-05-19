@@ -15,9 +15,10 @@ interface PreCopaFormProps {
     revelation_player: string;
   }) => Promise<void>;
   isSaving: boolean;
+  disabled?: boolean;
 }
 
-export function PreCopaForm({ initialData, onSave, isSaving }: PreCopaFormProps) {
+export function PreCopaForm({ initialData, onSave, isSaving, disabled = false }: PreCopaFormProps) {
   const [championTeam, setChampionTeam] = useState("");
   const [runnerUp, setRunnerUp] = useState("");
   const [goldenBallPlayer, setGoldenBallPlayer] = useState("");
@@ -67,7 +68,8 @@ export function PreCopaForm({ initialData, onSave, isSaving }: PreCopaFormProps)
             value={championTeam}
             onChange={(event) => setChampionTeam(event.target.value)}
             placeholder="Seleção campeã"
-            className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none focus:border-[#00ffb2]"
+            disabled={disabled}
+            className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none focus:border-[#00ffb2] disabled:cursor-not-allowed disabled:opacity-50"
             required
           />
         </label>
@@ -77,7 +79,8 @@ export function PreCopaForm({ initialData, onSave, isSaving }: PreCopaFormProps)
             value={runnerUp}
             onChange={(event) => setRunnerUp(event.target.value)}
             placeholder="Seleção vice"
-            className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none focus:border-[#00ffb2]"
+            disabled={disabled}
+            className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none focus:border-[#00ffb2] disabled:cursor-not-allowed disabled:opacity-50"
             required
           />
         </label>
@@ -90,41 +93,44 @@ export function PreCopaForm({ initialData, onSave, isSaving }: PreCopaFormProps)
             value={topScorer}
             onChange={(event) => setTopScorer(event.target.value)}
             placeholder="Jogador artilheiro"
-            className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none focus:border-[#00ffb2]"
+            disabled={disabled}
+            className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none focus:border-[#00ffb2] disabled:cursor-not-allowed disabled:opacity-50"
             required
           />
         </label>
         <label className="block text-sm text-slate-200">
-          Gols do artilheiro
+          Goleiro do torneio
           <input
-            type="number"
-            min={0}
-            value={topScorerGoals}
-            onChange={(event) => setTopScorerGoals(Number(event.target.value))}
-            className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none focus:border-[#00ffb2]"
+            value={goldenBallPlayer}
+            onChange={(event) => setGoldenBallPlayer(event.target.value)}
+            placeholder="Goleiro do torneio"
+            disabled={disabled}
+            className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none focus:border-[#00ffb2] disabled:cursor-not-allowed disabled:opacity-50"
             required
           />
         </label>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="block text-sm text-slate-200">
-          Melhor jogador
-          <input
-            value={goldenBallPlayer}
-            onChange={(event) => setGoldenBallPlayer(event.target.value)}
-            placeholder="Melhor jogador"
-            className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none focus:border-[#00ffb2]"
-            required
-          />
-        </label>
         <label className="block text-sm text-slate-200">
           Seleção surpresa
           <input
             value={mostAssists}
             onChange={(event) => setMostAssists(event.target.value)}
             placeholder="Seleção surpresa"
-            className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none focus:border-[#00ffb2]"
+            disabled={disabled}
+            className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none focus:border-[#00ffb2] disabled:cursor-not-allowed disabled:opacity-50"
+            required
+          />
+        </label>
+        <label className="block text-sm text-slate-200">
+          Seleção decepção
+          <input
+            value={fairPlayTeam}
+            onChange={(event) => setFairPlayTeam(event.target.value)}
+            placeholder="Seleção decepção"
+            disabled={disabled}
+            className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none focus:border-[#00ffb2] disabled:cursor-not-allowed disabled:opacity-50"
             required
           />
         </label>
@@ -132,33 +138,45 @@ export function PreCopaForm({ initialData, onSave, isSaving }: PreCopaFormProps)
 
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block text-sm text-slate-200">
-          Seleção decepção
-          <input
-            value={fairPlayTeam}
-            onChange={(event) => setFairPlayTeam(event.target.value)}
-            placeholder="Seleção decepção"
-            className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none focus:border-[#00ffb2]"
-            required
-          />
-        </label>
-        <label className="block text-sm text-slate-200">
           Revelação do torneio
           <input
             value={revelationPlayer}
             onChange={(event) => setRevelationPlayer(event.target.value)}
             placeholder="Jogador revelação"
-            className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none focus:border-[#00ffb2]"
+            disabled={disabled}
+            className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none focus:border-[#00ffb2] disabled:cursor-not-allowed disabled:opacity-50"
             required
           />
         </label>
+
+        <div className="hidden">
+          <label className="block text-sm text-slate-200">
+            Gols do artilheiro
+            <input
+              type="number"
+              min={0}
+              value={topScorerGoals}
+              onChange={(event) => setTopScorerGoals(Number(event.target.value))}
+            />
+          </label>
+          <label className="block text-sm text-slate-200">
+            Assistências do melhor jogador
+            <input
+              type="number"
+              min={0}
+              value={mostAssistsCount}
+              onChange={(event) => setMostAssistsCount(Number(event.target.value))}
+            />
+          </label>
+        </div>
       </div>
 
       <button
         type="submit"
-        disabled={isSaving}
-        className="w-full rounded-2xl bg-gradient-to-r from-[#00ffb2] to-[#00b2ff] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:shadow-lg hover:shadow-[#00ffb2]/30 disabled:opacity-70"
+        disabled={isSaving || disabled}
+        className="w-full rounded-2xl bg-gradient-to-r from-[#00ffb2] to-[#00b2ff] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:shadow-lg hover:shadow-[#00ffb2]/30 disabled:opacity-70 disabled:cursor-not-allowed"
       >
-        {isSaving ? "Salvando..." : "Salvar Palpite Pré-Copa"}
+        {isSaving ? "Salvando..." : disabled ? "Palpites encerrados" : "Salvar Palpite Pré-Copa"}
       </button>
     </form>
   );

@@ -44,29 +44,47 @@ export async function savePrediction(
   predictedHome: number,
   predictedAway: number
 ): Promise<Prediction | null> {
-  const { data, error } = await supabase
-    .from("predictions")
-    .upsert(
-      [
-        {
-          user_id: userId,
-          match_id: matchId,
-          predicted_home: predictedHome,
-          predicted_away: predictedAway,
-          updated_at: new Date().toISOString(),
-        },
-      ],
-      { onConflict: "user_id,match_id" }
-    )
-    .select("*")
-    .single();
+  try {
+    const payload = [
+      {
+        user_id: userId,
+        match_id: matchId,
+        predicted_home: predictedHome,
+        predicted_away: predictedAway,
+        updated_at: new Date().toISOString(),
+      },
+    ];
 
-  if (error) {
-    console.error("Erro ao salvar palpite:", error);
+    const { data, error } = await supabase
+      .from("predictions")
+      .upsert(payload, { onConflict: "user_id,match_id" })
+      .select("*")
+      .single();
+
+    if (error) {
+      console.error("Erro ao salvar palpite:", error);
+      return null;
+    }
+
+    return data || null;
+  } catch (error) {
+    console.error("Erro inesperado ao salvar palpite:", error);
     return null;
   }
+}
 
-  return data || null;
+export function canEditPrediction(matchDate?: string | null): boolean {
+  if (!matchDate) {
+    return true;
+  }
+
+  const lockTime = new Date(matchDate);
+  if (Number.isNaN(lockTime.getTime())) {
+    return true;
+  }
+
+  lockTime.setMinutes(lockTime.getMinutes() - 5);
+  return new Date() < lockTime;
 }
 
 export function isPredictionLocked(matchDate?: string | null, isOpen = true) {
@@ -74,14 +92,5 @@ export function isPredictionLocked(matchDate?: string | null, isOpen = true) {
     return true;
   }
 
-  if (!matchDate) {
-    return false;
-  }
-
-  const matchTime = new Date(matchDate).getTime();
-  if (Number.isNaN(matchTime)) {
-    return false;
-  }
-
-  return Date.now() >= matchTime;
+  return !canEditPrediction(matchDate);
 }

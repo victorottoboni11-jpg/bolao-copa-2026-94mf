@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/app/lib/auth";
-import { getPreCopaPrediction, savePreCopaPrediction } from "@/app/lib/preCopa";
+import { getPreCopaPrediction, savePreCopaPrediction, canEditPreCopaPrediction } from "@/app/lib/preCopa";
 import { PreCopaForm } from "@/app/components/PreCopaForm";
 import { Toast } from "@/app/components/Toast";
 import type { PreCopaPrediction } from "@/app/types";
@@ -14,6 +14,17 @@ export default function PreCopaPage() {
   const [loadingData, setLoadingData] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error" | "info"; message: string } | null>(null);
+
+  const PRE_COPA_LOCK_DATE = process.env.NEXT_PUBLIC_PRE_COPA_LOCK_DATE ?? "2026-06-01T00:00:00-03:00";
+  const preCopaLocked = !canEditPreCopaPrediction(PRE_COPA_LOCK_DATE);
+  const lockDateText = new Date(PRE_COPA_LOCK_DATE).toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "America/Sao_Paulo",
+  });
 
   useEffect(() => {
     if (!user) return;
@@ -95,11 +106,63 @@ export default function PreCopaPage() {
                 <p className="mt-2 text-lg font-semibold text-white">{user.name || user.full_name || user.email}</p>
               </div>
               <div>
-                <p className="text-sm uppercase tracking-[0.3em] text-[#00ffb2]">Versão</p>
-                <p className="mt-2 text-lg font-semibold text-white">Pré-Copa 94 Marketing & Football</p>
+                <p className="text-sm uppercase tracking-[0.3em] text-[#00ffb2]">Status</p>
+                <p className={`mt-2 inline-flex rounded-full px-3 py-1 text-sm font-semibold ${preCopaLocked ? "bg-rose-500/10 text-rose-300" : "bg-emerald-500/10 text-emerald-300"}`}>
+                  {preCopaLocked ? "Encerrado" : "Aberto"}
+                </p>
               </div>
             </div>
-            <PreCopaForm initialData={initialData} onSave={handleSave} isSaving={isSaving} />
+
+            <div className="mb-6 grid gap-4 sm:grid-cols-2">
+              <div>
+                <p className="text-sm uppercase tracking-[0.3em] text-[#00ffb2]">Última atualização</p>
+                <p className="mt-2 text-white">{initialData?.updated_at ? new Date(initialData.updated_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" }) : "Ainda não salvo"}</p>
+              </div>
+              <div>
+                <p className="text-sm uppercase tracking-[0.3em] text-[#00ffb2]">Prazo</p>
+                <p className="mt-2 text-white">{lockDateText}</p>
+              </div>
+            </div>
+
+            <div className="mb-6 rounded-3xl border border-[#00ffb2]/20 bg-[#081116] p-4">
+              <p className="text-sm uppercase tracking-[0.3em] text-[#00ffb2]">Meu Palpite Atual</p>
+              {initialData ? (
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-2xl bg-[#04070f] p-4">
+                    <p className="text-xs uppercase text-slate-400">Campeão</p>
+                    <p className="mt-2 text-lg font-semibold text-white">{initialData.champion_team}</p>
+                  </div>
+                  <div className="rounded-2xl bg-[#04070f] p-4">
+                    <p className="text-xs uppercase text-slate-400">Vice</p>
+                    <p className="mt-2 text-lg font-semibold text-white">{initialData.runner_up_team}</p>
+                  </div>
+                  <div className="rounded-2xl bg-[#04070f] p-4">
+                    <p className="text-xs uppercase text-slate-400">Artilheiro</p>
+                    <p className="mt-2 text-lg font-semibold text-white">{initialData.top_scorer_player}</p>
+                  </div>
+                  <div className="rounded-2xl bg-[#04070f] p-4">
+                    <p className="text-xs uppercase text-slate-400">Goleiro do torneio</p>
+                    <p className="mt-2 text-lg font-semibold text-white">{initialData.golden_ball_player}</p>
+                  </div>
+                  <div className="rounded-2xl bg-[#04070f] p-4">
+                    <p className="text-xs uppercase text-slate-400">Seleção surpresa</p>
+                    <p className="mt-2 text-lg font-semibold text-white">{initialData.most_assists_player}</p>
+                  </div>
+                  <div className="rounded-2xl bg-[#04070f] p-4">
+                    <p className="text-xs uppercase text-slate-400">Seleção decepção</p>
+                    <p className="mt-2 text-lg font-semibold text-white">{initialData.fair_play_team}</p>
+                  </div>
+                  <div className="rounded-2xl bg-[#04070f] p-4 sm:col-span-2">
+                    <p className="text-xs uppercase text-slate-400">Revelação do torneio</p>
+                    <p className="mt-2 text-lg font-semibold text-white">{initialData.revelation_player}</p>
+                  </div>
+                </div>
+              ) : (
+                <p className="mt-4 text-slate-400">Nenhum palpite Pré-Copa salvo ainda.</p>
+              )}
+            </div>
+
+            <PreCopaForm initialData={initialData} onSave={handleSave} isSaving={isSaving} disabled={preCopaLocked} />
           </div>
         )}
       </div>

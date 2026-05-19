@@ -54,17 +54,22 @@ export default function DashboardPage() {
     if (!user) return;
     setSavingMatchId(matchId);
 
-    const saved = await savePrediction(user.id, matchId, homeScore, awayScore);
-    if (!saved) {
-      setToast({ type: "error", message: "Falha ao salvar palpite." });
-      setSavingMatchId(null);
-      return;
-    }
+    try {
+      const saved = await savePrediction(user.id, matchId, homeScore, awayScore);
+      if (!saved) {
+        setToast({ type: "error", message: "Erro ao salvar palpite" });
+        return;
+      }
 
-    setPredictions((current) => ({ ...current, [matchId]: saved }));
-    setToast({ type: "success", message: "Palpite salvo com sucesso." });
-    setSavingMatchId(null);
-    window.setTimeout(() => setToast(null), 3500);
+      setPredictions((current) => ({ ...current, [matchId]: saved }));
+      setToast({ type: "success", message: "Palpite salvo com sucesso" });
+    } catch (error) {
+      console.error("Erro ao salvar palpite:", error);
+      setToast({ type: "error", message: "Erro ao salvar palpite" });
+    } finally {
+      setSavingMatchId(null);
+      window.setTimeout(() => setToast(null), 3500);
+    }
   };
 
   const myPredictionEntries = useMemo(() => Object.values(predictions), [predictions]);
@@ -89,19 +94,12 @@ export default function DashboardPage() {
     }).length;
   }, [matches, myPredictionEntries]);
 
-  const nextMatches = useMemo(() => {
-    const now = Date.now();
-    return matches
-      .filter((match) => new Date(match.match_date ?? match.match_datetime ?? "").getTime() > now)
-      .slice(0, 4);
-  }, [matches]);
-
-  const closedMatches = useMemo(() => {
-    const now = Date.now();
-    return matches
-      .filter((match) => new Date(match.match_date ?? match.match_datetime ?? "").getTime() <= now)
-      .slice(-4)
-      .reverse();
+  const sortedMatches = useMemo(() => {
+    return [...matches].sort((a, b) => {
+      const dateA = new Date(a.match_date ?? a.match_datetime ?? "").getTime();
+      const dateB = new Date(b.match_date ?? b.match_datetime ?? "").getTime();
+      return dateA - dateB;
+    });
   }, [matches]);
 
   if (loading || !user) {
@@ -159,16 +157,16 @@ export default function DashboardPage() {
 
             <div className="rounded-3xl border border-[#00ffb2]/20 bg-slate-950/90 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-[#00b2ff]">Próximos jogos</h2>
+                <h2 className="text-lg font-semibold text-[#00b2ff]">Todos os jogos</h2>
                 <span className="rounded-full bg-[#00ffb2]/10 px-3 py-1 text-xs text-[#00ffb2]">{predictionsOpen ? "Palpites abertos" : "Palpites fechados"}</span>
               </div>
               <div className="mt-4 space-y-4">
                 {loadingData ? (
                   <p className="text-sm text-slate-400">Carregando jogos...</p>
-                ) : nextMatches.length === 0 ? (
-                  <p className="text-sm text-slate-400">Nenhum jogo futuro disponível.</p>
+                ) : sortedMatches.length === 0 ? (
+                  <p className="text-sm text-slate-400">Nenhum jogo disponível.</p>
                 ) : (
-                  nextMatches.map((match) => {
+                  sortedMatches.map((match) => {
                     const prediction = predictions[match.id];
                     const locked = isPredictionLocked(match.match_date, predictionsOpen);
                     return (
@@ -179,36 +177,12 @@ export default function DashboardPage() {
                         awayTeam={typeof match.away_team === "object" && match.away_team ? match.away_team : undefined}
                         isEditable={!locked}
                         locked={locked}
-                        lockMessage={locked ? "Palpite encerrado para este confronto." : undefined}
+                        disabled={savingMatchId === match.id}
+                        lockMessage={locked ? "Palpites encerrados" : undefined}
                         predictedHome={prediction?.predicted_home}
                         predictedAway={prediction?.predicted_away}
+                        predictionUpdatedAt={prediction?.updated_at}
                         onPrediction={(homeScore, awayScore) => void handleSavePrediction(match.id, homeScore, awayScore)}
-                      />
-                    );
-                  })
-                )}
-              </div>
-            </div>
-
-            <div className="rounded-3xl border border-[#00ffb2]/20 bg-slate-950/90 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
-              <h2 className="text-lg font-semibold text-white">Últimos jogos</h2>
-              <div className="mt-4 space-y-4">
-                {loadingData ? (
-                  <p className="text-sm text-slate-400">Carregando...</p>
-                ) : closedMatches.length === 0 ? (
-                  <p className="text-sm text-slate-400">Nenhum jogo finalizado ainda.</p>
-                ) : (
-                  closedMatches.map((match) => {
-                    const prediction = predictions[match.id];
-                    return (
-                      <MatchCard
-                        key={match.id}
-                        match={match}
-                        homeTeam={typeof match.home_team === "object" && match.home_team ? match.home_team : undefined}
-                        awayTeam={typeof match.away_team === "object" && match.away_team ? match.away_team : undefined}
-                        isEditable={false}
-                        predictedHome={prediction?.predicted_home}
-                        predictedAway={prediction?.predicted_away}
                       />
                     );
                   })
