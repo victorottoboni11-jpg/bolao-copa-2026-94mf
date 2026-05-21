@@ -157,6 +157,35 @@ function buildMatchSeed() {
   });
 }
 
+function buildFriendlySeed() {
+  // Friendlies should have unique match_number values before official matches.
+  // We use 0 and -1 so they appear before match_number 1 but remain unique.
+  const matches: Array<any> = [];
+  matches.push({
+    home_team: "Brasil",
+    away_team: "Panamá",
+    group_name: null,
+    stadium: "Maracanã",
+    match_date: new Date("2026-05-31T18:30:00-03:00"),
+    match_number: 0,
+    phase: "friendly",
+  });
+
+  matches.push({
+    home_team: "Brasil",
+    away_team: "Egito",
+    group_name: null,
+    stadium: "Cleveland",
+    city: "Cleveland",
+    country: "United States",
+    match_date: new Date("2026-06-06T19:00:00-03:00"),
+    match_number: -1,
+    phase: "friendly",
+  });
+
+  return matches;
+}
+
 function buildKnockoutSeed() {
   const matches: Array<any> = [];
   let matchNumber = 73;
@@ -205,7 +234,7 @@ function buildKnockoutSeed() {
 }
 
 export const TEAMS_DATA = buildTeamSeed();
-export const MATCHES_DATA = [...buildMatchSeed(), ...buildKnockoutSeed()];
+export const MATCHES_DATA = [...buildFriendlySeed(), ...buildMatchSeed(), ...buildKnockoutSeed()];
 
 export const MATCHES = MATCHES_DATA.map((m, i) => ({ ...m, id: `match-${i + 1}` }));
 export const TOTAL_MATCHES = MATCHES.length;

@@ -1,4 +1,5 @@
 export const MATCH_PHASES = [
+  "friendly",
   "group",
   "round_of_32",
   "round_of_16",
@@ -11,6 +12,7 @@ export const MATCH_PHASES = [
 export type MatchPhase = (typeof MATCH_PHASES)[number];
 
 export const MATCH_PHASE_LABELS: Record<MatchPhase, string> = {
+  friendly: "Amistoso",
   group: "Fase de Grupos",
   round_of_32: "32 avos",
   round_of_16: "Oitavas",
