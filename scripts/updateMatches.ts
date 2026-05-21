@@ -44,27 +44,57 @@ const STADIUM_LOCATION: Record<string, { city: string; country: string }> = {
   "Estadio Akron": { city: "Zapopan", country: "Mexico" },
 };
 
+/**
+ * Treat a given Date (or parsable date string) as a wall-clock time in
+ * America/Sao_Paulo (Brasília) and return an ISO UTC string for that
+ * instant. This ignores the local runtime timezone and forces Brasília
+ * as the source of truth.
+ */
+function brasiliaToUTC(dateLike: Date | string | undefined | null) {
+  if (!dateLike) return null;
+  const d = typeof dateLike === "string" ? new Date(dateLike) : dateLike;
+  const Y = d.getFullYear();
+  const M = String(d.getMonth() + 1).padStart(2, "0");
+  const D = String(d.getDate()).padStart(2, "0");
+  const h = String(d.getHours()).padStart(2, "0");
+  const m = String(d.getMinutes()).padStart(2, "0");
+  const s = String(d.getSeconds()).padStart(2, "0");
+  // Brasília is UTC-03:00 (use fixed -03:00 according to project rule)
+  const isoWithOffset = `${Y}-${M}-${D}T${h}:${m}:${s}-03:00`;
+  return new Date(isoWithOffset).toISOString();
+}
+
 const dryRun = process.argv.includes("--dry-run") || process.argv.includes("-d");
 
-function normalizeMatch(match: typeof MATCHES_DATA[number]) {
+function normalizeMatch(
+  match: typeof MATCHES_DATA[number],
+  teamMap: Map<string, string>
+) {
   const location = STADIUM_LOCATION[match.stadium] ?? null;
+  const homeTeamId = teamMap.get(match.home_team) ?? null;
+  const awayTeamId = teamMap.get(match.away_team) ?? null;
+
+  if (!homeTeamId) {
+    console.warn(`⚠️ Não foi possível encontrar o ID do time mandante: ${match.home_team}`);
+  }
+  if (!awayTeamId) {
+    console.warn(`⚠️ Não foi possível encontrar o ID do time visitante: ${match.away_team}`);
+  }
+
+  const kickoffUtc = brasiliaToUTC(match.match_date) ?? null;
 
   return {
-    home_team: match.home_team,
-    away_team: match.away_team,
-    home_score: null,
-    away_score: null,
+    home_team_id: homeTeamId,
+    away_team_id: awayTeamId,
     match_number: match.match_number,
     phase: match.phase,
     phase_order: getPhaseOrder(match.phase),
-    group_name: match.group_name ?? null,
     stadium: match.stadium,
     city: location?.city ?? null,
     country: location?.country ?? null,
-    kickoff_at: match.match_date?.toISOString() ?? null,
+    kickoff_at: kickoffUtc,
+    match_date: kickoffUtc,
     status: "scheduled",
-    is_finished: false,
-    result_updated: false,
   };
 }
 
@@ -97,7 +127,25 @@ async function upsertTeams() {
 async function upsertMatches() {
   console.log("🔁 Atualizando partidas da Copa 2026...");
 
-  const matchesToUpsert = MATCHES_DATA.map(normalizeMatch);
+  const { data: teamsData, error: teamsError } = await supabase
+    .from("teams")
+    .select("id,name");
+
+  if (teamsError) {
+    console.error("Falha ao buscar IDs de times:", teamsError.message);
+    throw teamsError;
+  }
+
+  const teamMap = new Map<string, string>();
+  teamsData?.forEach((team) => {
+    if (team.id && team.name) {
+      teamMap.set(team.name, team.id);
+    }
+  });
+
+  const matchesToUpsert = MATCHES_DATA.map((match) =>
+    normalizeMatch(match, teamMap)
+  );
 
   if (dryRun) {
     console.log(`Dry run: would upsert ${matchesToUpsert.length} matches`);
