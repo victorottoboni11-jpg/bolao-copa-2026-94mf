@@ -81,75 +81,79 @@ export function MatchCard({
   const formattedTime = formatMatchTime(kickoffAt);
 
   return (
-    <div className="bg-gradient-to-br from-[#081116] to-[#070b16] border border-[#00ffb2]/20 rounded-xl overflow-hidden hover:border-[#00ffb2]/50 transition-all duration-300 shadow-lg hover:shadow-[0_0_20px_rgba(0,255,178,0.1)]">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-[#00ffb2]/10 to-[#00b2ff]/10 px-4 py-2 border-b border-[#00ffb2]/10">
-        <div className="flex justify-between items-center">
-          <span className="text-xs font-semibold text-[#00ffb2] uppercase tracking-widest flex items-center gap-2">
+    <div className="bg-gradient-to-br from-[#081116] to-[#070b16] border border-[#00ffb2]/20 rounded-lg overflow-hidden hover:border-[#00ffb2]/50 transition-all duration-300 shadow-lg hover:shadow-[0_0_20px_rgba(0,255,178,0.1)]">
+      {/* Header - Compact */}
+      <div className="bg-gradient-to-r from-[#00ffb2]/10 to-[#00b2ff]/10 px-3 py-2 border-b border-[#00ffb2]/10">
+        <div className="flex justify-between items-center gap-2">
+          <span className="text-xs font-bold text-[#00ffb2] uppercase tracking-wide flex items-center gap-1.5 flex-shrink-0">
             {match.phase === "friendly" ? (
-              <span className="px-2 py-0.5 rounded-full bg-yellow-400/10 text-yellow-300">Amistoso</span>
+              <span className="px-1.5 py-0.5 rounded-full bg-yellow-400/10 text-yellow-300 text-xs">Amistoso</span>
             ) : (
               match.group_name ? `Grupo ${match.group_name}` : formatPhaseLabel(match.phase)
             )}
           </span>
-          <span className="text-xs text-[#00b2ff]/70">{formattedDate}</span>
+          <span className="text-xs text-[#00b2ff]/60 text-right whitespace-nowrap">{formattedTime}</span>
         </div>
       </div>
 
       {/* Match Content */}
-      <div className="p-4">
-        {/* Estádio */}
-        <div className="text-xs text-gray-400 mb-3 text-center">
+      <div className="p-3 sm:p-4">
+        {/* Stadium & Date */}
+        <div className="text-xs text-gray-400 mb-2 text-center line-clamp-1">
           {match.stadium}
         </div>
-
-        <div className="text-xs text-slate-300 mb-3 text-center sm:text-left">
-          <span>{formattedDate}</span>
-          <span className="mx-1 hidden sm:inline">•</span>
-          <span>{formattedTime}</span>
+        <div className="text-xs text-slate-400 mb-3 text-center">
+          {formattedDate}
         </div>
 
-        <div className="mb-4 flex flex-col items-center gap-2 text-center text-xs sm:flex-row sm:justify-between sm:text-left">
-          <span className={`rounded-full px-3 py-1 font-semibold ${locked ? "bg-rose-500/10 text-rose-300" : "bg-emerald-500/10 text-emerald-300"}`}>
+        {/* Status Badge - Compact */}
+        <div className="mb-3 flex justify-center">
+          <span className={`rounded-full px-2 py-1 text-xs font-semibold ${locked ? "bg-rose-500/10 text-rose-300" : "bg-emerald-500/10 text-emerald-300"}`}>
             {locked ? "Encerrado" : "Aberto"}
           </span>
-          <span className="text-slate-400">Meu palpite: {hasPrediction ? `${predictedHome} - ${predictedAway}` : "Sem palpite"}</span>
-          {formattedPredictionAt ? <span className="text-slate-500">Última atualização: {formattedPredictionAt}</span> : null}
         </div>
 
-        {/* Times */}
-        <div className="grid grid-cols-3 gap-2 items-center mb-4">
+        {/* Prediction Info - Compact */}
+        {hasPrediction && (
+          <div className="mb-3 text-center text-xs text-slate-400">
+            Palpite: <span className="text-[#00ffb2]">{predictedHome} - {predictedAway}</span>
+            {formattedPredictionAt && <div className="text-slate-500 text-xs mt-1">{formattedPredictionAt}</div>}
+          </div>
+        )}
+
+        {/* Teams - Horizontal Compact Layout */}
+        <div className="flex items-center justify-between gap-1.5 mb-3 sm:gap-2">
           {/* Home Team */}
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center flex-1 min-w-0">
             {homeTeamResolved?.flag_url && (
               <Image
                 src={homeTeamResolved.flag_url}
                 alt={homeTeamName}
-                width={60}
-                height={40}
-                className="rounded mb-1"
+                width={48}
+                height={32}
+                className="rounded mb-1 sm:w-12 sm:h-8"
               />
             )}
-            <span className="text-xs font-semibold text-center text-white">
+            <span className="text-xs sm:text-sm font-semibold text-center text-white truncate">
               {homeTeamName}
             </span>
           </div>
 
-          {/* Score or Prediction */}
-          <div className="flex flex-col items-center gap-1">
+          {/* Score or Prediction - Center */}
+          <div className="flex flex-col items-center flex-shrink-0">
             {hasScore ? (
-              <div className="text-lg font-bold text-[#00ffb2]">
-                {match.home_score} - {match.away_score}
+              <div className="text-base sm:text-lg font-bold text-[#00ffb2]">
+                {match.home_score}–{match.away_score}
               </div>
             ) : isEditable ? (
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <div className="flex items-center gap-1 sm:gap-2">
                 <ScoreInput
                   value={home}
                   onChange={setHome}
                   disabled={locked || disabled}
                   label="placar do time da casa"
                 />
-                <span className="text-sm font-semibold text-[#00b2ff] sm:text-base">x</span>
+                <span className="text-xs sm:text-sm font-semibold text-[#00b2ff]">vs</span>
                 <ScoreInput
                   value={away}
                   onChange={setAway}
@@ -158,26 +162,26 @@ export function MatchCard({
                 />
               </div>
             ) : predictedHome !== undefined && predictedAway !== undefined ? (
-              <div className="text-sm font-semibold text-[#00b2ff]">
-                {predictedHome} - {predictedAway}
+              <div className="text-sm sm:text-base font-semibold text-[#00b2ff]">
+                {predictedHome}–{predictedAway}
               </div>
             ) : (
-              <div className="text-xs text-gray-500">Sem palpite</div>
+              <div className="text-xs text-gray-500">–</div>
             )}
           </div>
 
           {/* Away Team */}
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center flex-1 min-w-0">
             {awayTeamResolved?.flag_url && (
               <Image
                 src={awayTeamResolved.flag_url}
                 alt={awayTeamName}
-                width={60}
-                height={40}
-                className="rounded mb-1"
+                width={48}
+                height={32}
+                className="rounded mb-1 sm:w-12 sm:h-8"
               />
             )}
-            <span className="text-xs font-semibold text-center text-white">
+            <span className="text-xs sm:text-sm font-semibold text-center text-white truncate">
               {awayTeamName}
             </span>
           </div>
@@ -185,13 +189,13 @@ export function MatchCard({
 
         {/* Action Button */}
         {isEditable && onPrediction && !hasScore && (
-          <div className="space-y-2">
+          <div className="mt-3 space-y-1.5">
             <button
               onClick={handlePredict}
               disabled={locked || disabled}
-              className="w-full py-2 bg-gradient-to-r from-[#00ffb2] to-[#00b2ff] text-black font-semibold rounded-lg hover:shadow-lg hover:shadow-[#00ffb2]/30 transition-all duration-300 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full py-2 sm:py-2.5 bg-gradient-to-r from-[#00ffb2] to-[#00b2ff] text-black font-semibold rounded-lg hover:shadow-lg hover:shadow-[#00ffb2]/30 transition-all duration-300 text-sm disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {locked ? "Palpites encerrados" : disabled ? "Salvando..." : "Confirmar Palpite"}
+              {locked ? "Encerrado" : disabled ? "Salvando..." : "Confirmar"}
             </button>
             {locked && (
               <p className="text-center text-xs text-rose-300">{lockMessage ?? "Palpites encerrados"}</p>
@@ -200,8 +204,8 @@ export function MatchCard({
         )}
 
         {hasScore && (
-          <div className="text-xs text-center text-[#00ffb2]/70 py-2">
-            ✓ Resultado Finalizado
+          <div className="text-xs text-center text-[#00ffb2]/70 py-2 font-semibold">
+            ✓ Finalizado
           </div>
         )}
       </div>

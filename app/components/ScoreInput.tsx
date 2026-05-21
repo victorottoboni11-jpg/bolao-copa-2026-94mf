@@ -30,25 +30,25 @@ export function ScoreInput({
   };
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#00ffb2]/20 bg-[#04070f] px-2 py-2 text-white sm:px-3 sm:py-3">
+    <div className="flex items-center justify-between gap-1.5 sm:gap-2 rounded-lg border border-[#00ffb2]/20 bg-[#04070f] px-1 sm:px-2 py-1.5 sm:py-2 text-white">
       <button
         type="button"
         onClick={handleDecrease}
         disabled={disabled || value <= min}
         aria-label={label ? `Diminuir ${label}` : "Diminuir placar"}
-        className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0c1521] text-2xl font-bold transition hover:bg-[#0b1b2f] disabled:cursor-not-allowed disabled:opacity-50 sm:h-14 sm:w-14"
+        className="inline-flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-[#0c1521] text-lg sm:text-xl font-bold transition hover:bg-[#0b1b2f] disabled:cursor-not-allowed disabled:opacity-50"
       >
         –
       </button>
 
-      <span className="min-w-[2.5rem] text-center text-xl font-semibold sm:text-2xl">{value}</span>
+      <span className="min-w-[2rem] text-center text-lg sm:text-xl font-semibold">{value}</span>
 
       <button
         type="button"
         onClick={handleIncrease}
         disabled={disabled || value >= max}
         aria-label={label ? `Aumentar ${label}` : "Aumentar placar"}
-        className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0c1521] text-2xl font-bold transition hover:bg-[#0b1b2f] disabled:cursor-not-allowed disabled:opacity-50 sm:h-14 sm:w-14"
+        className="inline-flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-[#0c1521] text-lg sm:text-xl font-bold transition hover:bg-[#0b1b2f] disabled:cursor-not-allowed disabled:opacity-50"
       >
         +
       </button>
