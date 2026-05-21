@@ -14,9 +14,11 @@ export type Team = {
   created_at?: string;
 };
 
-export type Phase = "groups" | "round-of-16" | "quarterfinals" | "semifinals" | "final" | "pre-copa";
+import type { MatchPhase as MatchPhaseType } from "../lib/phases";
 
-export type MatchPhase = "group_stage" | "round_of_16" | "quarterfinals" | "semifinals" | "final";
+export type Phase = MatchPhaseType | "pre-copa";
+
+export type MatchPhase = MatchPhaseType;
 
 export type Match = {
   id: string;
@@ -24,15 +26,20 @@ export type Match = {
   away_team_id?: string | null;
   home_team?: Team | string | null;
   away_team?: Team | string | null;
+  home_team_info?: Team | null;
+  away_team_info?: Team | null;
   home_score?: number | null;
   away_score?: number | null;
   match_number?: number;
   phase: MatchPhase;
+  phase_order?: number | null;
   group_name?: string | null;
   stadium?: string | null;
   city?: string | null;
+  country?: string | null;
   match_date?: string;
   match_datetime?: string;
+  kickoff_at?: string | null;
   status?: "pending" | "live" | "finished" | "scheduled" | string;
   is_finished?: boolean;
   winner?: "home" | "away" | "draw" | null;
@@ -84,13 +91,11 @@ export type PreCopaPrediction = {
   user_id: string;
   champion_team: string;
   runner_up_team: string;
-  golden_ball_player: string;
   top_scorer_player: string;
   top_scorer_goals: number;
-  most_assists_player: string;
-  most_assists_count: number;
-  fair_play_team: string;
-  revelation_player: string;
+  best_goalkeeper_player: string;
+  best_player: string;
+  tournament_revelation: string;
   points: number;
   created_at?: string;
   updated_at?: string;
@@ -99,14 +104,12 @@ export type PreCopaPrediction = {
 export type PreCopaResult = {
   id: string;
   champion_team: string;
-  golden_ball_player: string;
+  runner_up_team: string;
   top_scorer_player: string;
   top_scorer_goals: number;
   best_goalkeeper_player: string;
-  most_assists_player: string;
-  most_assists_count: number;
-  fair_play_team: string;
-  revelation_player: string;
+  best_player: string;
+  tournament_revelation: string;
   created_at?: string;
 };
 

@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { getMatchKickoffAt } from "./matchDate";
 import type { PreCopaPrediction } from "../types";
 
 export async function getPreCopaPrediction(userId: string): Promise<PreCopaPrediction | null> {
@@ -14,6 +15,40 @@ export async function getPreCopaPrediction(userId: string): Promise<PreCopaPredi
   }
 
   return data || null;
+}
+
+export function getPreCopaLockDateFromMatchStart(matchDate?: string | null, minutesBefore = 5): string | null {
+  if (!matchDate) {
+    return null;
+  }
+
+  const deadline = new Date(matchDate);
+  if (Number.isNaN(deadline.getTime())) {
+    return null;
+  }
+
+  deadline.setMinutes(deadline.getMinutes() - minutesBefore);
+  return deadline.toISOString();
+}
+
+export async function fetchPreCopaLockDate(): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("matches")
+    .select("kickoff_at, match_date, match_datetime")
+    .order("kickoff_at", { ascending: true, nullsFirst: false })
+    .order("match_date", { ascending: true, nullsFirst: false })
+    .order("match_datetime", { ascending: true, nullsFirst: false })
+    .limit(1);
+
+  if (error) {
+    console.error("Erro ao buscar primeira partida da Copa:", error);
+    return null;
+  }
+
+  const earliestMatch = Array.isArray(data) ? data[0] : null;
+  const firstMatchDate = earliestMatch ? getMatchKickoffAt(earliestMatch) : null;
+
+  return getPreCopaLockDateFromMatchStart(firstMatchDate);
 }
 
 export function canEditPreCopaPrediction(lockDate?: string | null): boolean {
@@ -41,13 +76,11 @@ export async function savePreCopaPrediction(
           user_id: userId,
           champion_team: values.champion_team,
           runner_up_team: values.runner_up_team,
-          golden_ball_player: values.golden_ball_player,
           top_scorer_player: values.top_scorer_player,
           top_scorer_goals: values.top_scorer_goals,
-          most_assists_player: values.most_assists_player,
-          most_assists_count: values.most_assists_count,
-          fair_play_team: values.fair_play_team,
-          revelation_player: values.revelation_player,
+          best_goalkeeper_player: values.best_goalkeeper_player,
+          best_player: values.best_player,
+          tournament_revelation: values.tournament_revelation,
           updated_at: new Date().toISOString(),
         },
       ],

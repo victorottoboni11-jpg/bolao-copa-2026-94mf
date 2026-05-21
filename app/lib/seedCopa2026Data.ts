@@ -1,68 +1,68 @@
-/**
+﻿/**
  * Dados dos times oficiais Copa 2026
- * 12 grupos com 4 times cada = 48 seleções
+ * 12 grupos com 4 times cada = 48 seleÃ§Ãµes
  */
 
 export const TEAMS_DATA = [
   // GRUPO A
-  { name: "México", fifa_code: "MEX", group_name: "A", flag_url: "https://flagcdn.com/w320/mx.png" },
-  { name: "África do Sul", fifa_code: "RSA", group_name: "A", flag_url: "https://flagcdn.com/w320/za.png" },
+  { name: "MÃ©xico", fifa_code: "MEX", group_name: "A", flag_url: "https://flagcdn.com/w320/mx.png" },
+  { name: "Ãfrica do Sul", fifa_code: "RSA", group_name: "A", flag_url: "https://flagcdn.com/w320/za.png" },
   { name: "Coreia do Sul", fifa_code: "KOR", group_name: "A", flag_url: "https://flagcdn.com/w320/kr.png" },
-  { name: "República Tcheca", fifa_code: "CZE", group_name: "A", flag_url: "https://flagcdn.com/w320/cz.png" },
+  { name: "RepÃºblica Tcheca", fifa_code: "CZE", group_name: "A", flag_url: "https://flagcdn.com/w320/cz.png" },
 
   // GRUPO B
-  { name: "Canadá", fifa_code: "CAN", group_name: "B", flag_url: "https://flagcdn.com/w320/ca.png" },
-  { name: "Suíça", fifa_code: "SUI", group_name: "B", flag_url: "https://flagcdn.com/w320/ch.png" },
+  { name: "CanadÃ¡", fifa_code: "CAN", group_name: "B", flag_url: "https://flagcdn.com/w320/ca.png" },
+  { name: "SuÃ­Ã§a", fifa_code: "SUI", group_name: "B", flag_url: "https://flagcdn.com/w320/ch.png" },
   { name: "Qatar", fifa_code: "QAT", group_name: "B", flag_url: "https://flagcdn.com/w320/qa.png" },
-  { name: "Bósnia e Herzegovina", fifa_code: "BIH", group_name: "B", flag_url: "https://flagcdn.com/w320/ba.png" },
+  { name: "BÃ³snia e Herzegovina", fifa_code: "BIH", group_name: "B", flag_url: "https://flagcdn.com/w320/ba.png" },
 
   // GRUPO C
   { name: "Brasil", fifa_code: "BRA", group_name: "C", flag_url: "https://flagcdn.com/w320/br.png" },
-  { name: "Japão", fifa_code: "JPN", group_name: "C", flag_url: "https://flagcdn.com/w320/jp.png" },
-  { name: "Nigéria", fifa_code: "NGA", group_name: "C", flag_url: "https://flagcdn.com/w320/ng.png" },
+  { name: "JapÃ£o", fifa_code: "JPN", group_name: "C", flag_url: "https://flagcdn.com/w320/jp.png" },
+  { name: "NigÃ©ria", fifa_code: "NGA", group_name: "C", flag_url: "https://flagcdn.com/w320/ng.png" },
   { name: "Costa Rica", fifa_code: "CRC", group_name: "C", flag_url: "https://flagcdn.com/w320/cr.png" },
 
   // GRUPO D
   { name: "Estados Unidos", fifa_code: "USA", group_name: "D", flag_url: "https://flagcdn.com/w320/us.png" },
   { name: "Uruguai", fifa_code: "URU", group_name: "D", flag_url: "https://flagcdn.com/w320/uy.png" },
   { name: "Turquia", fifa_code: "TUR", group_name: "D", flag_url: "https://flagcdn.com/w320/tr.png" },
-  { name: "Austrália", fifa_code: "AUS", group_name: "D", flag_url: "https://flagcdn.com/w320/au.png" },
+  { name: "AustrÃ¡lia", fifa_code: "AUS", group_name: "D", flag_url: "https://flagcdn.com/w320/au.png" },
 
   // GRUPO E
   { name: "Espanha", fifa_code: "ESP", group_name: "E", flag_url: "https://flagcdn.com/w320/es.png" },
   { name: "Costa do Marfim", fifa_code: "CIV", group_name: "E", flag_url: "https://flagcdn.com/w320/ci.png" },
   { name: "Chile", fifa_code: "CHI", group_name: "E", flag_url: "https://flagcdn.com/w320/cl.png" },
-  { name: "Nova Zelândia", fifa_code: "NZL", group_name: "E", flag_url: "https://flagcdn.com/w320/nz.png" },
+  { name: "Nova ZelÃ¢ndia", fifa_code: "NZL", group_name: "E", flag_url: "https://flagcdn.com/w320/nz.png" },
 
   // GRUPO F
   { name: "Argentina", fifa_code: "ARG", group_name: "F", flag_url: "https://flagcdn.com/w320/ar.png" },
-  { name: "Croácia", fifa_code: "CRO", group_name: "F", flag_url: "https://flagcdn.com/w320/hr.png" },
-  { name: "Tunísia", fifa_code: "TUN", group_name: "F", flag_url: "https://flagcdn.com/w320/tn.png" },
-  { name: "Camarões", fifa_code: "CMR", group_name: "F", flag_url: "https://flagcdn.com/w320/cm.png" },
+  { name: "CroÃ¡cia", fifa_code: "CRO", group_name: "F", flag_url: "https://flagcdn.com/w320/hr.png" },
+  { name: "TunÃ­sia", fifa_code: "TUN", group_name: "F", flag_url: "https://flagcdn.com/w320/tn.png" },
+  { name: "CamarÃµes", fifa_code: "CMR", group_name: "F", flag_url: "https://flagcdn.com/w320/cm.png" },
 
   // GRUPO G
-  { name: "França", fifa_code: "FRA", group_name: "G", flag_url: "https://flagcdn.com/w320/fr.png" },
+  { name: "FranÃ§a", fifa_code: "FRA", group_name: "G", flag_url: "https://flagcdn.com/w320/fr.png" },
   { name: "Egito", fifa_code: "EGY", group_name: "G", flag_url: "https://flagcdn.com/w320/eg.png" },
   { name: "Peru", fifa_code: "PER", group_name: "G", flag_url: "https://flagcdn.com/w320/pe.png" },
   { name: "China", fifa_code: "CHN", group_name: "G", flag_url: "https://flagcdn.com/w320/cn.png" },
 
   // GRUPO H
   { name: "Inglaterra", fifa_code: "ENG", group_name: "H", flag_url: "https://flagcdn.com/w320/gb-eng.png" },
-  { name: "Colômbia", fifa_code: "COL", group_name: "H", flag_url: "https://flagcdn.com/w320/co.png" },
-  { name: "Sérvia", fifa_code: "SRB", group_name: "H", flag_url: "https://flagcdn.com/w320/rs.png" },
-  { name: "Grécia", fifa_code: "GRE", group_name: "H", flag_url: "https://flagcdn.com/w320/gr.png" },
+  { name: "ColÃ´mbia", fifa_code: "COL", group_name: "H", flag_url: "https://flagcdn.com/w320/co.png" },
+  { name: "SÃ©rvia", fifa_code: "SRB", group_name: "H", flag_url: "https://flagcdn.com/w320/rs.png" },
+  { name: "GrÃ©cia", fifa_code: "GRE", group_name: "H", flag_url: "https://flagcdn.com/w320/gr.png" },
 
   // GRUPO I
   { name: "Portugal", fifa_code: "POR", group_name: "I", flag_url: "https://flagcdn.com/w320/pt.png" },
   { name: "Noruega", fifa_code: "NOR", group_name: "I", flag_url: "https://flagcdn.com/w320/no.png" },
-  { name: "Irã", fifa_code: "IRN", group_name: "I", flag_url: "https://flagcdn.com/w320/ir.png" },
-  { name: "Escócia", fifa_code: "SCO", group_name: "I", flag_url: "https://flagcdn.com/w320/gb-sct.png" },
+  { name: "IrÃ£", fifa_code: "IRN", group_name: "I", flag_url: "https://flagcdn.com/w320/ir.png" },
+  { name: "EscÃ³cia", fifa_code: "SCO", group_name: "I", flag_url: "https://flagcdn.com/w320/gb-sct.png" },
 
   // GRUPO J
   { name: "Alemanha", fifa_code: "GER", group_name: "J", flag_url: "https://flagcdn.com/w320/de.png" },
-  { name: "Áustria", fifa_code: "AUT", group_name: "J", flag_url: "https://flagcdn.com/w320/at.png" },
-  { name: "Argélia", fifa_code: "ALG", group_name: "J", flag_url: "https://flagcdn.com/w320/dz.png" },
-  { name: "Jordânia", fifa_code: "JOR", group_name: "J", flag_url: "https://flagcdn.com/w320/jo.png" },
+  { name: "Ãustria", fifa_code: "AUT", group_name: "J", flag_url: "https://flagcdn.com/w320/at.png" },
+  { name: "ArgÃ©lia", fifa_code: "ALG", group_name: "J", flag_url: "https://flagcdn.com/w320/dz.png" },
+  { name: "JordÃ¢nia", fifa_code: "JOR", group_name: "J", flag_url: "https://flagcdn.com/w320/jo.png" },
 
   // GRUPO K
   { name: "Holanda", fifa_code: "NED", group_name: "K", flag_url: "https://flagcdn.com/w320/nl.png" },
@@ -71,7 +71,7 @@ export const TEAMS_DATA = [
   { name: "Honduras", fifa_code: "HON", group_name: "K", flag_url: "https://flagcdn.com/w320/hn.png" },
 
   // GRUPO L
-  { name: "Bélgica", fifa_code: "BEL", group_name: "L", flag_url: "https://flagcdn.com/w320/be.png" },
+  { name: "BÃ©lgica", fifa_code: "BEL", group_name: "L", flag_url: "https://flagcdn.com/w320/be.png" },
   { name: "Dinamarca", fifa_code: "DEN", group_name: "L", flag_url: "https://flagcdn.com/w320/dk.png" },
   { name: "Paraguai", fifa_code: "PAR", group_name: "L", flag_url: "https://flagcdn.com/w320/py.png" },
   { name: "Gana", fifa_code: "GHA", group_name: "L", flag_url: "https://flagcdn.com/w320/gh.png" },
@@ -79,187 +79,187 @@ export const TEAMS_DATA = [
 
 /**
  * Dados das partidas da fase de grupos
- * 6 partidas por grupo × 12 grupos = 72 partidas
+ * 6 partidas por grupo Ã— 12 grupos = 72 partidas
  */
 export const MATCHES_DATA = [
   // GRUPO A - Rodada 1
   {
-    home_team: "México",
+    home_team: "MÃ©xico",
     away_team: "Coreia do Sul",
     group_name: "A",
     stadium: "NRG Stadium",
     match_date: new Date("2026-06-12T16:00:00Z"),
     match_number: 1,
-    phase: "group_stage",
+    phase: "group",
   },
   {
-    home_team: "África do Sul",
-    away_team: "República Tcheca",
+    home_team: "Ãfrica do Sul",
+    away_team: "RepÃºblica Tcheca",
     group_name: "A",
     stadium: "AT&T Stadium",
     match_date: new Date("2026-06-12T20:00:00Z"),
     match_number: 2,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO A - Rodada 2
   {
     home_team: "Coreia do Sul",
-    away_team: "República Tcheca",
+    away_team: "RepÃºblica Tcheca",
     group_name: "A",
     stadium: "SoFi Stadium",
     match_date: new Date("2026-06-17T16:00:00Z"),
     match_number: 3,
-    phase: "group_stage",
+    phase: "group",
   },
   {
-    home_team: "África do Sul",
-    away_team: "México",
+    home_team: "Ãfrica do Sul",
+    away_team: "MÃ©xico",
     group_name: "A",
     stadium: "Allegiant Stadium",
     match_date: new Date("2026-06-17T20:00:00Z"),
     match_number: 4,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO A - Rodada 3
   {
     home_team: "Coreia do Sul",
-    away_team: "África do Sul",
+    away_team: "Ãfrica do Sul",
     group_name: "A",
     stadium: "Arrowhead Stadium",
     match_date: new Date("2026-06-22T20:00:00Z"),
     match_number: 5,
-    phase: "group_stage",
+    phase: "group",
   },
   {
-    home_team: "México",
-    away_team: "República Tcheca",
+    home_team: "MÃ©xico",
+    away_team: "RepÃºblica Tcheca",
     group_name: "A",
     stadium: "MetLife Stadium",
     match_date: new Date("2026-06-22T20:00:00Z"),
     match_number: 6,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO B - Rodada 1
   {
-    home_team: "Canadá",
+    home_team: "CanadÃ¡",
     away_team: "Qatar",
     group_name: "B",
     stadium: "Levi's Stadium",
     match_date: new Date("2026-06-13T16:00:00Z"),
     match_number: 7,
-    phase: "group_stage",
+    phase: "group",
   },
   {
-    home_team: "Suíça",
-    away_team: "Bósnia e Herzegovina",
+    home_team: "SuÃ­Ã§a",
+    away_team: "BÃ³snia e Herzegovina",
     group_name: "B",
     stadium: "Lincoln Financial Field",
     match_date: new Date("2026-06-13T20:00:00Z"),
     match_number: 8,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO B - Rodada 2
   {
-    home_team: "Bósnia e Herzegovina",
-    away_team: "Canadá",
+    home_team: "BÃ³snia e Herzegovina",
+    away_team: "CanadÃ¡",
     group_name: "B",
     stadium: "Soldier Field",
     match_date: new Date("2026-06-18T16:00:00Z"),
     match_number: 9,
-    phase: "group_stage",
+    phase: "group",
   },
   {
     home_team: "Qatar",
-    away_team: "Suíça",
+    away_team: "SuÃ­Ã§a",
     group_name: "B",
     stadium: "Gillette Stadium",
     match_date: new Date("2026-06-18T20:00:00Z"),
     match_number: 10,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO B - Rodada 3
   {
-    home_team: "Bósnia e Herzegovina",
+    home_team: "BÃ³snia e Herzegovina",
     away_team: "Qatar",
     group_name: "B",
     stadium: "Empower Field",
     match_date: new Date("2026-06-23T20:00:00Z"),
     match_number: 11,
-    phase: "group_stage",
+    phase: "group",
   },
   {
-    home_team: "Canadá",
-    away_team: "Suíça",
+    home_team: "CanadÃ¡",
+    away_team: "SuÃ­Ã§a",
     group_name: "B",
     stadium: "Vancouver Stadium",
     match_date: new Date("2026-06-23T20:00:00Z"),
     match_number: 12,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO C - Rodada 1
   {
     home_team: "Brasil",
-    away_team: "Nigéria",
+    away_team: "NigÃ©ria",
     group_name: "C",
     stadium: "Mercedes-Benz Stadium",
     match_date: new Date("2026-06-14T16:00:00Z"),
     match_number: 13,
-    phase: "group_stage",
+    phase: "group",
   },
   {
-    home_team: "Japão",
+    home_team: "JapÃ£o",
     away_team: "Costa Rica",
     group_name: "C",
     stadium: "Hard Rock Stadium",
     match_date: new Date("2026-06-14T20:00:00Z"),
     match_number: 14,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO C - Rodada 2
   {
-    home_team: "Nigéria",
+    home_team: "NigÃ©ria",
     away_team: "Brasil",
     group_name: "C",
     stadium: "Neyland Stadium",
     match_date: new Date("2026-06-19T16:00:00Z"),
     match_number: 15,
-    phase: "group_stage",
+    phase: "group",
   },
   {
     home_team: "Costa Rica",
-    away_team: "Japão",
+    away_team: "JapÃ£o",
     group_name: "C",
     stadium: "Bank of America Stadium",
     match_date: new Date("2026-06-19T20:00:00Z"),
     match_number: 16,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO C - Rodada 3
   {
-    home_team: "Nigéria",
+    home_team: "NigÃ©ria",
     away_team: "Costa Rica",
     group_name: "C",
     stadium: "Heinz Field",
     match_date: new Date("2026-06-24T20:00:00Z"),
     match_number: 17,
-    phase: "group_stage",
+    phase: "group",
   },
   {
-    home_team: "Japão",
+    home_team: "JapÃ£o",
     away_team: "Brasil",
     group_name: "C",
     stadium: "Nissan Stadium",
     match_date: new Date("2026-06-24T20:00:00Z"),
     match_number: 18,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO D - Rodada 1
@@ -270,16 +270,16 @@ export const MATCHES_DATA = [
     stadium: "Fulton County Stadium",
     match_date: new Date("2026-06-15T16:00:00Z"),
     match_number: 19,
-    phase: "group_stage",
+    phase: "group",
   },
   {
-    home_team: "Austrália",
+    home_team: "AustrÃ¡lia",
     away_team: "Uruguai",
     group_name: "D",
     stadium: "Acrisure Stadium",
     match_date: new Date("2026-06-15T20:00:00Z"),
     match_number: 20,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO D - Rodada 2
@@ -290,16 +290,16 @@ export const MATCHES_DATA = [
     stadium: "Q2 Stadium",
     match_date: new Date("2026-06-20T16:00:00Z"),
     match_number: 21,
-    phase: "group_stage",
+    phase: "group",
   },
   {
     home_team: "Uruguai",
-    away_team: "Austrália",
+    away_team: "AustrÃ¡lia",
     group_name: "D",
     stadium: "INVESCO Field",
     match_date: new Date("2026-06-20T20:00:00Z"),
     match_number: 22,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO D - Rodada 3
@@ -310,16 +310,16 @@ export const MATCHES_DATA = [
     stadium: "Folsom Field",
     match_date: new Date("2026-06-25T20:00:00Z"),
     match_number: 23,
-    phase: "group_stage",
+    phase: "group",
   },
   {
-    home_team: "Austrália",
+    home_team: "AustrÃ¡lia",
     away_team: "Estados Unidos",
     group_name: "D",
     stadium: "EverBank Stadium",
     match_date: new Date("2026-06-25T20:00:00Z"),
     match_number: 24,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO E - Rodada 1
@@ -330,16 +330,16 @@ export const MATCHES_DATA = [
     stadium: "Caesars Superdome",
     match_date: new Date("2026-06-16T16:00:00Z"),
     match_number: 25,
-    phase: "group_stage",
+    phase: "group",
   },
   {
     home_team: "Costa do Marfim",
-    away_team: "Nova Zelândia",
+    away_team: "Nova ZelÃ¢ndia",
     group_name: "E",
     stadium: "Providence Park",
     match_date: new Date("2026-06-16T20:00:00Z"),
     match_number: 26,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO E - Rodada 2
@@ -350,16 +350,16 @@ export const MATCHES_DATA = [
     stadium: "CenturyLink Field",
     match_date: new Date("2026-06-21T16:00:00Z"),
     match_number: 27,
-    phase: "group_stage",
+    phase: "group",
   },
   {
-    home_team: "Nova Zelândia",
+    home_team: "Nova ZelÃ¢ndia",
     away_team: "Costa do Marfim",
     group_name: "E",
     stadium: "Rio Tinto Stadium",
     match_date: new Date("2026-06-21T20:00:00Z"),
     match_number: 28,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO E - Rodada 3
@@ -370,87 +370,87 @@ export const MATCHES_DATA = [
     stadium: "Snapdragon Stadium",
     match_date: new Date("2026-06-26T20:00:00Z"),
     match_number: 29,
-    phase: "group_stage",
+    phase: "group",
   },
   {
-    home_team: "Nova Zelândia",
+    home_team: "Nova ZelÃ¢ndia",
     away_team: "Espanha",
     group_name: "E",
     stadium: "Cretin Stadium",
     match_date: new Date("2026-06-26T20:00:00Z"),
     match_number: 30,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO F - Rodada 1
   {
     home_team: "Argentina",
-    away_team: "Tunísia",
+    away_team: "TunÃ­sia",
     group_name: "F",
     stadium: "Orlando City Stadium",
     match_date: new Date("2026-06-12T16:00:00Z"),
     match_number: 31,
-    phase: "group_stage",
+    phase: "group",
   },
   {
-    home_team: "Croácia",
-    away_team: "Camarões",
+    home_team: "CroÃ¡cia",
+    away_team: "CamarÃµes",
     group_name: "F",
     stadium: "Minute Maid Park",
     match_date: new Date("2026-06-12T20:00:00Z"),
     match_number: 32,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO F - Rodada 2
   {
-    home_team: "Tunísia",
+    home_team: "TunÃ­sia",
     away_team: "Argentina",
     group_name: "F",
     stadium: "Toyota Stadium",
     match_date: new Date("2026-06-17T16:00:00Z"),
     match_number: 33,
-    phase: "group_stage",
+    phase: "group",
   },
   {
-    home_team: "Camarões",
-    away_team: "Croácia",
+    home_team: "CamarÃµes",
+    away_team: "CroÃ¡cia",
     group_name: "F",
     stadium: "University of Phoenix Stadium",
     match_date: new Date("2026-06-17T20:00:00Z"),
     match_number: 34,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO F - Rodada 3
   {
-    home_team: "Tunísia",
-    away_team: "Croácia",
+    home_team: "TunÃ­sia",
+    away_team: "CroÃ¡cia",
     group_name: "F",
     stadium: "Dignity Health Sports Park",
     match_date: new Date("2026-06-22T20:00:00Z"),
     match_number: 35,
-    phase: "group_stage",
+    phase: "group",
   },
   {
-    home_team: "Camarões",
+    home_team: "CamarÃµes",
     away_team: "Argentina",
     group_name: "F",
     stadium: "Rose Bowl",
     match_date: new Date("2026-06-22T20:00:00Z"),
     match_number: 36,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO G - Rodada 1
   {
-    home_team: "França",
+    home_team: "FranÃ§a",
     away_team: "Peru",
     group_name: "G",
     stadium: "San Diego Stadium",
     match_date: new Date("2026-06-13T16:00:00Z"),
     match_number: 37,
-    phase: "group_stage",
+    phase: "group",
   },
   {
     home_team: "Egito",
@@ -459,18 +459,18 @@ export const MATCHES_DATA = [
     stadium: "LAFC Stadium",
     match_date: new Date("2026-06-13T20:00:00Z"),
     match_number: 38,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO G - Rodada 2
   {
     home_team: "Peru",
-    away_team: "França",
+    away_team: "FranÃ§a",
     group_name: "G",
     stadium: "Dignity Health Park",
     match_date: new Date("2026-06-18T16:00:00Z"),
     match_number: 39,
-    phase: "group_stage",
+    phase: "group",
   },
   {
     home_team: "China",
@@ -479,7 +479,7 @@ export const MATCHES_DATA = [
     stadium: "Lambeau Field",
     match_date: new Date("2026-06-18T20:00:00Z"),
     match_number: 40,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO G - Rodada 3
@@ -490,196 +490,196 @@ export const MATCHES_DATA = [
     stadium: "Cotton Bowl Stadium",
     match_date: new Date("2026-06-23T20:00:00Z"),
     match_number: 41,
-    phase: "group_stage",
+    phase: "group",
   },
   {
     home_team: "China",
-    away_team: "França",
+    away_team: "FranÃ§a",
     group_name: "G",
     stadium: "Tropicana Field",
     match_date: new Date("2026-06-23T20:00:00Z"),
     match_number: 42,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO H - Rodada 1
   {
     home_team: "Inglaterra",
-    away_team: "Sérvia",
+    away_team: "SÃ©rvia",
     group_name: "H",
     stadium: "Wrigley Field",
     match_date: new Date("2026-06-14T16:00:00Z"),
     match_number: 43,
-    phase: "group_stage",
+    phase: "group",
   },
   {
-    home_team: "Colômbia",
-    away_team: "Grécia",
+    home_team: "ColÃ´mbia",
+    away_team: "GrÃ©cia",
     group_name: "H",
     stadium: "Fenway Park",
     match_date: new Date("2026-06-14T20:00:00Z"),
     match_number: 44,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO H - Rodada 2
   {
-    home_team: "Sérvia",
+    home_team: "SÃ©rvia",
     away_team: "Inglaterra",
     group_name: "H",
     stadium: "Yankee Stadium",
     match_date: new Date("2026-06-19T16:00:00Z"),
     match_number: 45,
-    phase: "group_stage",
+    phase: "group",
   },
   {
-    home_team: "Grécia",
-    away_team: "Colômbia",
+    home_team: "GrÃ©cia",
+    away_team: "ColÃ´mbia",
     group_name: "H",
     stadium: "Kauffman Stadium",
     match_date: new Date("2026-06-19T20:00:00Z"),
     match_number: 46,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO H - Rodada 3
   {
-    home_team: "Sérvia",
-    away_team: "Colômbia",
+    home_team: "SÃ©rvia",
+    away_team: "ColÃ´mbia",
     group_name: "H",
     stadium: "Telus Spark",
     match_date: new Date("2026-06-24T20:00:00Z"),
     match_number: 47,
-    phase: "group_stage",
+    phase: "group",
   },
   {
-    home_team: "Grécia",
+    home_team: "GrÃ©cia",
     away_team: "Inglaterra",
     group_name: "H",
     stadium: "Commonwealth Stadium",
     match_date: new Date("2026-06-24T20:00:00Z"),
     match_number: 48,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO I - Rodada 1
   {
     home_team: "Portugal",
-    away_team: "Irã",
+    away_team: "IrÃ£",
     group_name: "I",
     stadium: "BC Place",
     match_date: new Date("2026-06-15T16:00:00Z"),
     match_number: 49,
-    phase: "group_stage",
+    phase: "group",
   },
   {
     home_team: "Noruega",
-    away_team: "Escócia",
+    away_team: "EscÃ³cia",
     group_name: "I",
     stadium: "Mosaic Stadium",
     match_date: new Date("2026-06-15T20:00:00Z"),
     match_number: 50,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO I - Rodada 2
   {
-    home_team: "Irã",
+    home_team: "IrÃ£",
     away_team: "Portugal",
     group_name: "I",
     stadium: "Sunlife Stadium",
     match_date: new Date("2026-06-20T16:00:00Z"),
     match_number: 51,
-    phase: "group_stage",
+    phase: "group",
   },
   {
-    home_team: "Escócia",
+    home_team: "EscÃ³cia",
     away_team: "Noruega",
     group_name: "I",
     stadium: "Viejas Arena",
     match_date: new Date("2026-06-20T20:00:00Z"),
     match_number: 52,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO I - Rodada 3
   {
-    home_team: "Irã",
+    home_team: "IrÃ£",
     away_team: "Noruega",
     group_name: "I",
     stadium: "Banc of California Stadium",
     match_date: new Date("2026-06-25T20:00:00Z"),
     match_number: 53,
-    phase: "group_stage",
+    phase: "group",
   },
   {
-    home_team: "Escócia",
+    home_team: "EscÃ³cia",
     away_team: "Portugal",
     group_name: "I",
     stadium: "Dignity Health Park",
     match_date: new Date("2026-06-25T20:00:00Z"),
     match_number: 54,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO J - Rodada 1
   {
     home_team: "Alemanha",
-    away_team: "Argélia",
+    away_team: "ArgÃ©lia",
     group_name: "J",
     stadium: "Gila River Stadium",
     match_date: new Date("2026-06-16T16:00:00Z"),
     match_number: 55,
-    phase: "group_stage",
+    phase: "group",
   },
   {
-    home_team: "Áustria",
-    away_team: "Jordânia",
+    home_team: "Ãustria",
+    away_team: "JordÃ¢nia",
     group_name: "J",
     stadium: "Honda Center",
     match_date: new Date("2026-06-16T20:00:00Z"),
     match_number: 56,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO J - Rodada 2
   {
-    home_team: "Argélia",
+    home_team: "ArgÃ©lia",
     away_team: "Alemanha",
     group_name: "J",
     stadium: "Arrowhead Stadium",
     match_date: new Date("2026-06-21T16:00:00Z"),
     match_number: 57,
-    phase: "group_stage",
+    phase: "group",
   },
   {
-    home_team: "Jordânia",
-    away_team: "Áustria",
+    home_team: "JordÃ¢nia",
+    away_team: "Ãustria",
     group_name: "J",
     stadium: "Empower Field",
     match_date: new Date("2026-06-21T20:00:00Z"),
     match_number: 58,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO J - Rodada 3
   {
-    home_team: "Argélia",
-    away_team: "Jordânia",
+    home_team: "ArgÃ©lia",
+    away_team: "JordÃ¢nia",
     group_name: "J",
     stadium: "CenturyLink Field",
     match_date: new Date("2026-06-26T20:00:00Z"),
     match_number: 59,
-    phase: "group_stage",
+    phase: "group",
   },
   {
-    home_team: "Áustria",
+    home_team: "Ãustria",
     away_team: "Alemanha",
     group_name: "J",
     stadium: "Raymond James Stadium",
     match_date: new Date("2026-06-26T20:00:00Z"),
     match_number: 60,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO K - Rodada 1
@@ -690,7 +690,7 @@ export const MATCHES_DATA = [
     stadium: "Tampa Bay",
     match_date: new Date("2026-06-13T16:00:00Z"),
     match_number: 61,
-    phase: "group_stage",
+    phase: "group",
   },
   {
     home_team: "Senegal",
@@ -699,7 +699,7 @@ export const MATCHES_DATA = [
     stadium: "Darrell K Royal Stadium",
     match_date: new Date("2026-06-13T20:00:00Z"),
     match_number: 62,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO K - Rodada 2
@@ -710,7 +710,7 @@ export const MATCHES_DATA = [
     stadium: "Guaranteed Rate Field",
     match_date: new Date("2026-06-18T16:00:00Z"),
     match_number: 63,
-    phase: "group_stage",
+    phase: "group",
   },
   {
     home_team: "Honduras",
@@ -719,7 +719,7 @@ export const MATCHES_DATA = [
     stadium: "Comerica Park",
     match_date: new Date("2026-06-18T20:00:00Z"),
     match_number: 64,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO K - Rodada 3
@@ -730,7 +730,7 @@ export const MATCHES_DATA = [
     stadium: "SoFi Stadium",
     match_date: new Date("2026-06-23T20:00:00Z"),
     match_number: 65,
-    phase: "group_stage",
+    phase: "group",
   },
   {
     home_team: "Honduras",
@@ -739,18 +739,18 @@ export const MATCHES_DATA = [
     stadium: "Allegiant Stadium",
     match_date: new Date("2026-06-23T20:00:00Z"),
     match_number: 66,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO L - Rodada 1
   {
-    home_team: "Bélgica",
+    home_team: "BÃ©lgica",
     away_team: "Paraguai",
     group_name: "L",
     stadium: "MetLife Stadium",
     match_date: new Date("2026-06-14T16:00:00Z"),
     match_number: 67,
-    phase: "group_stage",
+    phase: "group",
   },
   {
     home_team: "Dinamarca",
@@ -759,18 +759,18 @@ export const MATCHES_DATA = [
     stadium: "Soldier Field",
     match_date: new Date("2026-06-14T20:00:00Z"),
     match_number: 68,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO L - Rodada 2
   {
     home_team: "Paraguai",
-    away_team: "Bélgica",
+    away_team: "BÃ©lgica",
     group_name: "L",
     stadium: "Gillette Stadium",
     match_date: new Date("2026-06-19T16:00:00Z"),
     match_number: 69,
-    phase: "group_stage",
+    phase: "group",
   },
   {
     home_team: "Gana",
@@ -779,7 +779,7 @@ export const MATCHES_DATA = [
     stadium: "Empower Field",
     match_date: new Date("2026-06-19T20:00:00Z"),
     match_number: 70,
-    phase: "group_stage",
+    phase: "group",
   },
 
   // GRUPO L - Rodada 3
@@ -790,15 +790,15 @@ export const MATCHES_DATA = [
     stadium: "Arrowhead Stadium",
     match_date: new Date("2026-06-24T20:00:00Z"),
     match_number: 71,
-    phase: "group_stage",
+    phase: "group",
   },
   {
     home_team: "Gana",
-    away_team: "Bélgica",
+    away_team: "BÃ©lgica",
     group_name: "L",
     stadium: "MetLife Stadium",
     match_date: new Date("2026-06-24T20:00:00Z"),
     match_number: 72,
-    phase: "group_stage",
+    phase: "group",
   },
 ];

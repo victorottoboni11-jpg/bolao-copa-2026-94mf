@@ -1,0 +1,161 @@
+warning: in the working copy of 'app/grupos/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/layout.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'package-lock.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'package.json', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/app/components/AdminPanelNew.tsx b/app/components/AdminPanelNew.tsx[m
+[1mindex ff6fdbd..b65a512 100644[m
+[1m--- a/app/components/AdminPanelNew.tsx[m
+[1m+++ b/app/components/AdminPanelNew.tsx[m
+[36m@@ -25,7 +25,7 @@[m [mexport function AdminPanel() {[m
+ [m
+       setMessage({[m
+         type: "success",[m
+[31m-        text: "✅ Copa 2026 importada com sucesso! 48 times + 72 matches",[m
+[32m+[m[32m        text: "✅ Copa 2026 importada com sucesso! 48 times + 104 partidas",[m
+       });[m
+       setIsImported(true);[m
+     } catch (error) {[m
+[36m@@ -50,7 +50,7 @@[m [mexport function AdminPanel() {[m
+         <div className="bg-[#04070f] border border-[#00b2ff]/20 rounded-lg p-4">[m
+           <h3 className="text-white font-semibold mb-2">Importar Copa 2026</h3>[m
+           <p className="text-sm text-gray-400 mb-4">[m
+[31m-            Importar dados oficiais: 48 times, 12 grupos, 72 confrontos de grupos[m
+[32m+[m[32m            Importar dados oficiais: 48 times, 12 grupos, 104 partidas (grupos + mata-mata)[m
+           </p>[m
+ [m
+           <button[m
+[36m@@ -79,7 +79,7 @@[m [mexport function AdminPanel() {[m
+         <div className="text-xs text-gray-500 space-y-1">[m
+           <p>• Equipes: 48</p>[m
+           <p>• Grupos: 12 (A-L)</p>[m
+[31m-          <p>• Matches: 72 (fase de grupos)</p>[m
+[32m+[m[32m          <p>• Partidas: 104 (72 grupos + 32 mata-mata)</p>[m
+         </div>[m
+       </div>[m
+     </div>[m
+[1mdiff --git a/app/components/MatchCard.tsx b/app/components/MatchCard.tsx[m
+[1mindex 64f5649..fe2f818 100644[m
+[1m--- a/app/components/MatchCard.tsx[m
+[1m+++ b/app/components/MatchCard.tsx[m
+[36m@@ -1,8 +1,10 @@[m
+ "use client";[m
+ [m
+[31m-import { useEffect, useState } from "react";[m
+[32m+[m[32mimport { useState } from "react";[m
+ import Image from "next/image";[m
+ import { ScoreInput } from "@/app/components/ScoreInput";[m
+[32m+[m[32mimport { formatPhaseLabel } from "@/app/lib/phases";[m
+[32m+[m[32mimport { formatMatchDate, formatMatchTime, getMatchKickoffAt } from "@/app/lib/matchDate";[m
+ import type { Match, Team } from "@/app/types";[m
+ [m
+ interface MatchCardProps {[m
+[36m@@ -30,6 +32,7 @@[m [mexport function MatchCard({[m
+   locked = false,[m
+   disabled = false,[m
+   lockMessage,[m
+[32m+[m[32m  predictionUpdatedAt,[m
+ }: MatchCardProps) {[m
+   const [home, setHome] = useState(predictedHome ?? 0);[m
+   const [away, setAway] = useState(predictedAway ?? 0);[m
+[36m@@ -56,15 +59,15 @@[m [mexport function MatchCard({[m
+     onPrediction?.(home, away);[m
+   };[m
+ [m
+[31m-  useEffect(() => {[m
+[31m-    setHome(() => predictedHome ?? 0);[m
+[31m-    setAway(() => predictedAway ?? 0);[m
+[31m-  }, [predictedHome, predictedAway]);[m
+ [m
+   const homeTeamResolved =[m
+[31m-    homeTeam ?? (typeof match.home_team === "object" ? match.home_team : undefined);[m
+[32m+[m[32m    homeTeam ??[m
+[32m+[m[32m    match.home_team_info ??[m
+[32m+[m[32m    (typeof match.home_team === "object" ? match.home_team : undefined);[m
+   const awayTeamResolved =[m
+[31m-    awayTeam ?? (typeof match.away_team === "object" ? match.away_team : undefined);[m
+[32m+[m[32m    awayTeam ??[m
+[32m+[m[32m    match.away_team_info ??[m
+[32m+[m[32m    (typeof match.away_team === "object" ? match.away_team : undefined);[m
+ [m
+   const homeTeamName =[m
+     homeTeamResolved?.name ||[m
+[36m@@ -73,16 +76,9 @@[m [mexport function MatchCard({[m
+     awayTeamResolved?.name ||[m
+     (typeof match.away_team === "string" ? match.away_team : "Visitante");[m
+ [m
+[31m-  const matchDate = new Date(match.match_date ?? match.match_datetime ?? "");[m
+[31m-  const formattedDate = isNaN(matchDate.getTime())[m
+[31m-    ? "Data indefinida"[m
+[31m-    : matchDate.toLocaleDateString("pt-BR", {[m
+[31m-        day: "2-digit",[m
+[31m-        month: "short",[m
+[31m-        hour: "2-digit",[m
+[31m-        minute: "2-digit",[m
+[31m-        timeZone: "America/Sao_Paulo",[m
+[31m-      });[m
+[32m+[m[32m  const kickoffAt = getMatchKickoffAt(match);[m
+[32m+[m[32m  const formattedDate = formatMatchDate(kickoffAt);[m
+[32m+[m[32m  const formattedTime = formatMatchTime(kickoffAt);[m
+ [m
+   return ([m
+     <div className="bg-gradient-to-br from-[#081116] to-[#070b16] border border-[#00ffb2]/20 rounded-xl overflow-hidden hover:border-[#00ffb2]/50 transition-all duration-300 shadow-lg hover:shadow-[0_0_20px_rgba(0,255,178,0.1)]">[m
+[36m@@ -90,7 +86,7 @@[m [mexport function MatchCard({[m
+       <div className="bg-gradient-to-r from-[#00ffb2]/10 to-[#00b2ff]/10 px-4 py-2 border-b border-[#00ffb2]/10">[m
+         <div className="flex justify-between items-center">[m
+           <span className="text-xs font-semibold text-[#00ffb2] uppercase tracking-widest">[m
+[31m-            {match.group_name ? `Grupo ${match.group_name}` : match.phase}[m
+[32m+[m[32m            {match.group_name ? `Grupo ${match.group_name}` : formatPhaseLabel(match.phase)}[m
+           </span>[m
+           <span className="text-xs text-[#00b2ff]/70">{formattedDate}</span>[m
+         </div>[m
+[36m@@ -103,6 +99,12 @@[m [mexport function MatchCard({[m
+           {match.stadium}[m
+         </div>[m
+ [m
+[32m+[m[32m        <div className="text-xs text-slate-300 mb-3 text-center sm:text-left">[m
+[32m+[m[32m          <span>{formattedDate}</span>[m
+[32m+[m[32m          <span className="mx-1 hidden sm:inline">•</span>[m
+[32m+[m[32m          <span>{formattedTime}</span>[m
+[32m+[m[32m        </div>[m
+[32m+[m
+         <div className="mb-4 flex flex-col items-center gap-2 text-center text-xs sm:flex-row sm:justify-between sm:text-left">[m
+           <span className={`rounded-full px-3 py-1 font-semibold ${locked ? "bg-rose-500/10 text-rose-300" : "bg-emerald-500/10 text-emerald-300"}`}>[m
+             {locked ? "Encerrado" : "Aberto"}[m
+[1mdiff --git a/app/components/PreCopaForm.tsx b/app/components/PreCopaForm.tsx[m
+[1mindex fe99abd..1d3e48d 100644[m
+[1m--- a/app/components/PreCopaForm.tsx[m
+[1m+++ b/app/components/PreCopaForm.tsx[m
+[36m@@ -1,4 +1,4 @@[m
+[31m-import { useEffect, useState } from "react";[m
+[32m+[m[32mimport { useState, type FormEvent } from "react";[m
+ import type { PreCopaPrediction } from "@/app/types";[m
+ [m
+ interface PreCopaFormProps {[m
+[36m@@ -6,178 +6,192 @@[m [minterface PreCopaFormProps {[m
+   onSave: (values: {[m
+     champion_team: string;[m
+     runner_up_team: string;[m
+[31m-    golden_ball_player: string;[m
+     top_scorer_player: string;[m
+     top_scorer_goals: number;[m
+[31m-    most_assists_player: string;[m
+[31m-    most_assists_count: number;[m
+[31m-    fair_play_team: string;[m
+[31m-    revelation_player: string;[m
+[32m+[m[32m    best_goalkeeper_player: string;[m
+[32m+[m[32m    best_player: string;[m
+[32m+[m[32m    tournament_revelation: string;[m
+   }) => Promise<void>;[m
+   isSaving: boolean;[m
+   disabled?: boolean;[m
+ }[m
+ [m
+ export function PreCopaForm({ initialData, onSave, isSaving, disabled = false }: PreCopaFormProps) {[m
+[31m-  const [championTeam, setChampionTeam] = useState("");[m
+[31m-  const [runnerUp, setRunnerUp] = useState("");[m
+[31m-  const [goldenBallPlayer, setGoldenBallPlayer] = useState("");[m
+[31m-  const [topScorer, setTopScorer] = useState("");[m
+[31m-  const [topScorerGoals, setTopScorerGoals] = useState(0);[m
+[31m-  const [mostAssists, setMostAssists] = useState("");[m
+[31m-  const [mostAssistsCount, setMostAssistsCount] = useState(

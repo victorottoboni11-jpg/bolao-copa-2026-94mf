@@ -7,6 +7,7 @@ import { getAllMatches } from "@/app/lib/importCopa2026";
 import { fetchRanking } from "@/app/lib/rankings";
 import { getPredictionsForMatches, savePrediction, isPredictionLocked } from "@/app/lib/predictions";
 import { getPredictionsOpenSetting } from "@/app/lib/matches";
+import { getMatchKickoffAt } from "@/app/lib/matchDate";
 import { MatchCard } from "@/app/components/MatchCard";
 import { Toast } from "@/app/components/Toast";
 import { calculateMatchPoints } from "@/app/lib/scoring";
@@ -96,8 +97,8 @@ export default function DashboardPage() {
 
   const sortedMatches = useMemo(() => {
     return [...matches].sort((a, b) => {
-      const dateA = new Date(a.match_date ?? a.match_datetime ?? "").getTime();
-      const dateB = new Date(b.match_date ?? b.match_datetime ?? "").getTime();
+      const dateA = new Date(getMatchKickoffAt(a) ?? "").getTime();
+      const dateB = new Date(getMatchKickoffAt(b) ?? "").getTime();
       return dateA - dateB;
     });
   }, [matches]);
@@ -156,22 +157,56 @@ export default function DashboardPage() {
             </div>
 
             <div className="rounded-3xl border border-[#00ffb2]/20 bg-slate-950/90 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
+              <h2 className="text-lg font-semibold text-[#00ffb2]">Atalhos</h2>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <Link
+                  href="/fase-de-grupos"
+                  className="rounded-3xl border border-[#00b2ff]/20 bg-[#081116] p-5 text-left transition hover:border-[#00b2ff]/50 hover:bg-[#0f172a]"
+                >
+                  <p className="text-sm font-semibold text-[#00b2ff]">Fase de Grupos</p>
+                  <p className="mt-2 text-sm text-slate-400">Gerencie seus palpites para os jogos de grupos.</p>
+                </Link>
+                <Link
+                  href="/mata-mata"
+                  className="rounded-3xl border border-[#00ffb2]/20 bg-[#081116] p-5 text-left transition hover:border-[#00ffb2]/50 hover:bg-[#0f172a]"
+                >
+                  <p className="text-sm font-semibold text-[#00ffb2]">Mata-Mata</p>
+                  <p className="mt-2 text-sm text-slate-400">Veja as eliminatórias e atualize seus palpites.</p>
+                </Link>
+                <Link
+                  href="/pre-copa"
+                  className="rounded-3xl border border-[#00ffb2]/20 bg-[#081116] p-5 text-left transition hover:border-[#00ffb2]/50 hover:bg-[#0f172a]"
+                >
+                  <p className="text-sm font-semibold text-[#00ffb2]">Pré-Copa</p>
+                  <p className="mt-2 text-sm text-slate-400">Acesse a página especial de palpites exclusivos.</p>
+                </Link>
+                <Link
+                  href="/ranking"
+                  className="rounded-3xl border border-[#00ffb2]/20 bg-[#081116] p-5 text-left transition hover:border-[#00ffb2]/50 hover:bg-[#0f172a]"
+                >
+                  <p className="text-sm font-semibold text-[#00ffb2]">Ranking</p>
+                  <p className="mt-2 text-sm text-slate-400">Confira sua posição no campeonato.</p>
+                </Link>
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-[#00ffb2]/20 bg-slate-950/90 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-[#00b2ff]">Todos os jogos</h2>
+                <h2 className="text-lg font-semibold text-[#00b2ff]">Próximos jogos</h2>
                 <span className="rounded-full bg-[#00ffb2]/10 px-3 py-1 text-xs text-[#00ffb2]">{predictionsOpen ? "Palpites abertos" : "Palpites fechados"}</span>
               </div>
               <div className="mt-4 space-y-4">
                 {loadingData ? (
-                  <p className="text-sm text-slate-400">Carregando jogos...</p>
+                  <p className="text-sm text-slate-400">Carregando próximos jogos...</p>
                 ) : sortedMatches.length === 0 ? (
                   <p className="text-sm text-slate-400">Nenhum jogo disponível.</p>
                 ) : (
-                  sortedMatches.map((match) => {
+                  sortedMatches.slice(0, 3).map((match) => {
                     const prediction = predictions[match.id];
-                    const locked = isPredictionLocked(match.match_date, predictionsOpen);
+                    const locked = isPredictionLocked(getMatchKickoffAt(match), predictionsOpen);
                     return (
                       <MatchCard
-                        key={match.id}
+                        key={`${match.id}-${prediction?.predicted_home ?? ""}-${prediction?.predicted_away ?? ""}`}
                         match={match}
                         homeTeam={typeof match.home_team === "object" && match.home_team ? match.home_team : undefined}
                         awayTeam={typeof match.away_team === "object" && match.away_team ? match.away_team : undefined}

@@ -25,7 +25,7 @@ export function AdminPanel() {
 
       setMessage({
         type: "success",
-        text: "✅ Copa 2026 importada com sucesso! 48 times + 72 matches",
+        text: "✅ Copa 2026 importada com sucesso! 48 times + 104 partidas",
       });
       setIsImported(true);
     } catch (error) {
@@ -50,7 +50,7 @@ export function AdminPanel() {
         <div className="bg-[#04070f] border border-[#00b2ff]/20 rounded-lg p-4">
           <h3 className="text-white font-semibold mb-2">Importar Copa 2026</h3>
           <p className="text-sm text-gray-400 mb-4">
-            Importar dados oficiais: 48 times, 12 grupos, 72 confrontos de grupos
+            Importar dados oficiais: 48 times, 12 grupos, 104 partidas (grupos + mata-mata)
           </p>
 
           <button
@@ -79,7 +79,7 @@ export function AdminPanel() {
         <div className="text-xs text-gray-500 space-y-1">
           <p>• Equipes: 48</p>
           <p>• Grupos: 12 (A-L)</p>
-          <p>• Matches: 72 (fase de grupos)</p>
+          <p>• Partidas: 104 (72 grupos + 32 mata-mata)</p>
         </div>
       </div>
     </div>

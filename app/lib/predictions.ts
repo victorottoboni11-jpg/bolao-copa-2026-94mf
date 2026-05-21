@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import type { Prediction } from "../types";
+import { canEditPrediction as canEditPredictionUtil, isPredictionLocked as isPredictionLockedUtil } from "./matchDate";
 
 export async function getUserPredictions(userId: string): Promise<Prediction[]> {
   const { data, error } = await supabase
@@ -74,23 +75,9 @@ export async function savePrediction(
 }
 
 export function canEditPrediction(matchDate?: string | null): boolean {
-  if (!matchDate) {
-    return true;
-  }
-
-  const lockTime = new Date(matchDate);
-  if (Number.isNaN(lockTime.getTime())) {
-    return true;
-  }
-
-  lockTime.setMinutes(lockTime.getMinutes() - 5);
-  return new Date() < lockTime;
+  return canEditPredictionUtil(matchDate);
 }
 
 export function isPredictionLocked(matchDate?: string | null, isOpen = true) {
-  if (!isOpen) {
-    return true;
-  }
-
-  return !canEditPrediction(matchDate);
+  return isPredictionLockedUtil(matchDate, isOpen);
 }

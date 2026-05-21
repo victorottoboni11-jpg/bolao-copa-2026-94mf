@@ -5,7 +5,7 @@ export async function atualizarResultados() {
   const { data, error } = await supabase
     .from("matches")
     .select("id, home_score, away_score")
-    .order("match_datetime", { ascending: true });
+    .order("kickoff_at", { ascending: true });
 
   if (error) {
     console.error("Erro ao buscar partidas para atualização:", error);

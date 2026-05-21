@@ -112,12 +112,22 @@ export default function Home() {
           </a>
 
           <a
-            href="/grupos"
+            href="/fase-de-grupos"
             className="p-6 bg-gradient-to-br from-[#081116] to-[#070b16] border border-[#00b2ff]/20 rounded-xl hover:border-[#00b2ff]/50 transition-all hover:shadow-lg hover:shadow-[#00b2ff]/10"
           >
-            <h3 className="font-semibold text-[#00b2ff] mb-2">🏆 Grupos</h3>
+            <h3 className="font-semibold text-[#00b2ff] mb-2">🏆 Fase de Grupos</h3>
             <p className="text-sm text-gray-400">
-              Veja a classificação dos grupos e confrontos
+              Veja os palpites e jogos da fase de grupos
+            </p>
+          </a>
+
+          <a
+            href="/mata-mata"
+            className="p-6 bg-gradient-to-br from-[#081116] to-[#070b16] border border-[#00ffb2]/20 rounded-xl hover:border-[#00ffb2]/50 transition-all hover:shadow-lg hover:shadow-[#00ffb2]/10"
+          >
+            <h3 className="font-semibold text-[#00ffb2] mb-2">🥅 Mata-Mata</h3>
+            <p className="text-sm text-gray-400">
+              Acesse os jogos eliminatórios e faça seus palpites
             </p>
           </a>
 

@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import { calculateMatchPoints } from "./scoring";
+import { isGroupPhase } from "./phases";
 import type { Match, Prediction, RankingEntry } from "../types";
 
 export async function fetchRanking(): Promise<RankingEntry[]> {
@@ -106,15 +107,15 @@ async function calculateRankingFromPredictions(): Promise<RankingEntry[]> {
     if (existing) {
       existing.total_points += points;
       existing.exact_scores += exact;
-      existing.group_stage_points += match.phase === "group_stage" ? points : 0;
-      existing.knockout_points += match.phase === "group_stage" ? 0 : points;
+      existing.group_stage_points += isGroupPhase(match.phase) ? points : 0;
+      existing.knockout_points += isGroupPhase(match.phase) ? 0 : points;
     } else {
       scoreMap.set(userId, {
         ...base,
         total_points: points,
         exact_scores: exact,
-        group_stage_points: match.phase === "group_stage" ? points : 0,
-        knockout_points: match.phase === "group_stage" ? 0 : points,
+        group_stage_points: isGroupPhase(match.phase) ? points : 0,
+        knockout_points: isGroupPhase(match.phase) ? 0 : points,
       });
     }
   });

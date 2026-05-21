@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { ScoreInput } from "@/app/components/ScoreInput";
+import { formatPhaseLabel } from "@/app/lib/phases";
+import { formatMatchDate, formatMatchTime, getMatchKickoffAt } from "@/app/lib/matchDate";
 import type { Match, Team } from "@/app/types";
 
 interface MatchCardProps {
@@ -30,6 +32,7 @@ export function MatchCard({
   locked = false,
   disabled = false,
   lockMessage,
+  predictionUpdatedAt,
 }: MatchCardProps) {
   const [home, setHome] = useState(predictedHome ?? 0);
   const [away, setAway] = useState(predictedAway ?? 0);
@@ -56,15 +59,15 @@ export function MatchCard({
     onPrediction?.(home, away);
   };
 
-  useEffect(() => {
-    setHome(() => predictedHome ?? 0);
-    setAway(() => predictedAway ?? 0);
-  }, [predictedHome, predictedAway]);
 
   const homeTeamResolved =
-    homeTeam ?? (typeof match.home_team === "object" ? match.home_team : undefined);
+    homeTeam ??
+    match.home_team_info ??
+    (typeof match.home_team === "object" ? match.home_team : undefined);
   const awayTeamResolved =
-    awayTeam ?? (typeof match.away_team === "object" ? match.away_team : undefined);
+    awayTeam ??
+    match.away_team_info ??
+    (typeof match.away_team === "object" ? match.away_team : undefined);
 
   const homeTeamName =
     homeTeamResolved?.name ||
@@ -73,16 +76,9 @@ export function MatchCard({
     awayTeamResolved?.name ||
     (typeof match.away_team === "string" ? match.away_team : "Visitante");
 
-  const matchDate = new Date(match.match_date ?? match.match_datetime ?? "");
-  const formattedDate = isNaN(matchDate.getTime())
-    ? "Data indefinida"
-    : matchDate.toLocaleDateString("pt-BR", {
-        day: "2-digit",
-        month: "short",
-        hour: "2-digit",
-        minute: "2-digit",
-        timeZone: "America/Sao_Paulo",
-      });
+  const kickoffAt = getMatchKickoffAt(match);
+  const formattedDate = formatMatchDate(kickoffAt);
+  const formattedTime = formatMatchTime(kickoffAt);
 
   return (
     <div className="bg-gradient-to-br from-[#081116] to-[#070b16] border border-[#00ffb2]/20 rounded-xl overflow-hidden hover:border-[#00ffb2]/50 transition-all duration-300 shadow-lg hover:shadow-[0_0_20px_rgba(0,255,178,0.1)]">
@@ -90,7 +86,7 @@ export function MatchCard({
       <div className="bg-gradient-to-r from-[#00ffb2]/10 to-[#00b2ff]/10 px-4 py-2 border-b border-[#00ffb2]/10">
         <div className="flex justify-between items-center">
           <span className="text-xs font-semibold text-[#00ffb2] uppercase tracking-widest">
-            {match.group_name ? `Grupo ${match.group_name}` : match.phase}
+            {match.group_name ? `Grupo ${match.group_name}` : formatPhaseLabel(match.phase)}
           </span>
           <span className="text-xs text-[#00b2ff]/70">{formattedDate}</span>
         </div>
@@ -101,6 +97,12 @@ export function MatchCard({
         {/* Estádio */}
         <div className="text-xs text-gray-400 mb-3 text-center">
           {match.stadium}
+        </div>
+
+        <div className="text-xs text-slate-300 mb-3 text-center sm:text-left">
+          <span>{formattedDate}</span>
+          <span className="mx-1 hidden sm:inline">•</span>
+          <span>{formattedTime}</span>
         </div>
 
         <div className="mb-4 flex flex-col items-center gap-2 text-center text-xs sm:flex-row sm:justify-between sm:text-left">

@@ -6,20 +6,20 @@ export async function fetchAdminMatches(): Promise<Match[]> {
     .from("matches")
     .select(`
       *,
-      home_team:home_team_id (
+      home_team_info:home_team_id (
         id,
         name,
         flag_url,
         fifa_code
       ),
-      away_team:away_team_id (
+      away_team_info:away_team_id (
         id,
         name,
         flag_url,
         fifa_code
       )
     `)
-    .order("match_date", { ascending: true });
+    .order("kickoff_at", { ascending: true });
 
   if (error) {
     console.error("Erro ao buscar jogos para admin:", error);
@@ -101,11 +101,43 @@ export async function getPredictionsOpenSetting(): Promise<boolean> {
   return data?.predictions_open ?? true;
 }
 
+export async function isGroupStageFinished(): Promise<boolean> {
+  const { count, error } = await supabase
+    .from("matches")
+    .select("*", { count: "exact", head: true })
+    .eq("phase", "group")
+    .neq("status", "finished");
+
+  if (error) {
+    console.error("Erro ao verificar status da fase de grupos:", error);
+    return false;
+  }
+
+  return (count ?? 0) === 0;
+}
+
+export type MataMataPredictionState = {
+  isOpen: boolean;
+  groupStageFinished: boolean;
+};
+
+export async function getMataMataPredictionState(): Promise<MataMataPredictionState> {
+  const [manualOpen, groupFinished] = await Promise.all([
+    getPredictionsOpenSetting(),
+    isGroupStageFinished(),
+  ]);
+
+  return {
+    isOpen: manualOpen && groupFinished,
+    groupStageFinished: groupFinished,
+  };
+}
+
 export async function setPredictionsOpenSetting(isOpen: boolean): Promise<boolean> {
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from("admin_settings")
     .upsert({
-      id: "00000000-0000-0000-0000-000000000001",
+      id: "00000000-0000-0000-000000000001",
       predictions_open: isOpen,
       updated_at: new Date().toISOString(),
     }, {
