@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/app/lib/auth";
+import { supabase } from "@/app/lib/supabase";
 
-const LINKS = [
+const BASE_LINKS = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/fase-de-grupos", label: "Fase de Grupos" },
   { href: "/mata-mata", label: "Mata-Mata" },
@@ -15,6 +17,58 @@ const LINKS = [
 export function Navbar() {
   const pathname = usePathname();
   const { user, loading, signOut } = useAuth();
+  const [isProfileAdmin, setIsProfileAdmin] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function checkProfile() {
+      if (!user?.id) {
+        setIsProfileAdmin(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("is_admin")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (!mounted) return;
+
+        if (!error && data && typeof data.is_admin === "boolean") {
+          setIsProfileAdmin(Boolean(data.is_admin));
+          return;
+        }
+      } catch (err) {
+        // ignore and fallback to user.is_admin
+      }
+
+      // fallback to user.is_admin (populated from users table/profile sync)
+      setIsProfileAdmin(Boolean(user?.is_admin));
+    }
+
+    void checkProfile();
+
+    return () => {
+      mounted = false;
+    };
+  }, [user]);
+
+  const LINKS = useMemo(() => {
+    // insert Admin link before Ranking (after Pré-Copa)
+    const links = [...BASE_LINKS];
+    if (isProfileAdmin) {
+      // ensure we don't duplicate
+      const exists = links.find((l) => l.href === "/admin");
+      if (!exists) {
+        // insert before the last item (Ranking)
+        links.splice(4, 0, { href: "/admin", label: "Admin" });
+      }
+    }
+    return links;
+  }, [isProfileAdmin]);
 
   const isActive = (href: string) => {
     if (href === "/dashboard" && pathname === "/") {
