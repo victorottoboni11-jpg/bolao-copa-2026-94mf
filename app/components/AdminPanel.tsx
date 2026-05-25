@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import type { Match } from "../types";
 
 interface AdminPanelProps {
@@ -85,9 +88,9 @@ interface AdminMatchCardProps {
 }
 
 function AdminMatchCard({ jogo, onUpdateScore, onMarkFinished, isBusy }: AdminMatchCardProps) {
-  const [homeScore, setHomeScore] = React.useState(jogo.home_score ?? "");
-  const [awayScore, setAwayScore] = React.useState(jogo.away_score ?? "");
-  const [isEditing, setIsEditing] = React.useState(false);
+  const [homeScore, setHomeScore] = useState<number | string>(jogo.home_score ?? "");
+  const [awayScore, setAwayScore] = useState<number | string>(jogo.away_score ?? "");
+  const [isEditing, setIsEditing] = useState(false);
 
   const isFinished = jogo.home_score !== null && jogo.away_score !== null;
 
@@ -124,9 +127,7 @@ function AdminMatchCard({ jogo, onUpdateScore, onMarkFinished, isBusy }: AdminMa
         : "border-orange-500/20 bg-orange-950/20"
     }`}>
       <div className="mb-3 flex items-center justify-between text-sm">
-        <span className="text-slate-400">
-          {jogo.group_name || jogo.phase || "Partida"}
-        </span>
+        <span className="text-slate-400">{jogo.group_name || jogo.phase || "Partida"}</span>
         <span className={`rounded-full px-2 py-1 text-xs ${
           isFinished
             ? "bg-green-500/20 text-green-400"
@@ -146,7 +147,7 @@ function AdminMatchCard({ jogo, onUpdateScore, onMarkFinished, isBusy }: AdminMa
                 min="0"
                 max="20"
                 value={homeScore}
-                onChange={(e) => setHomeScore(e.target.value)}
+                onChange={(e) => setHomeScore(e.target.value === "" ? "" : Number(e.target.value))}
                 className="w-12 rounded border border-slate-600 bg-slate-800 px-2 py-1 text-center text-white"
               />
               <span className="text-slate-400">x</span>
@@ -155,19 +156,15 @@ function AdminMatchCard({ jogo, onUpdateScore, onMarkFinished, isBusy }: AdminMa
                 min="0"
                 max="20"
                 value={awayScore}
-                onChange={(e) => setAwayScore(e.target.value)}
+                onChange={(e) => setAwayScore(e.target.value === "" ? "" : Number(e.target.value))}
                 className="w-12 rounded border border-slate-600 bg-slate-800 px-2 py-1 text-center text-white"
               />
             </>
           ) : (
             <>
-              <span className="w-8 text-center text-lg font-semibold text-white">
-                {jogo.home_score ?? "-"}
-              </span>
+              <span className="w-8 text-center text-lg font-semibold text-white">{jogo.home_score ?? "-"}</span>
               <span className="text-slate-400">x</span>
-              <span className="w-8 text-center text-lg font-semibold text-white">
-                {jogo.away_score ?? "-"}
-              </span>
+              <span className="w-8 text-center text-lg font-semibold text-white">{jogo.away_score ?? "-"}</span>
             </>
           )}
         </div>
@@ -218,6 +215,3 @@ function AdminMatchCard({ jogo, onUpdateScore, onMarkFinished, isBusy }: AdminMa
     </div>
   );
 }
-
-// Import React for useState
-import React from "react";

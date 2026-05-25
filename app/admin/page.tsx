@@ -1,57 +1,82 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useIsAdmin } from "@/app/lib/useIsAdmin";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/app/lib/auth";
-import { AdminPanel } from "@/app/components/AdminPanel";
+import { useIsAdmin } from "@/app/lib/useIsAdmin";
+import { AdminFilters } from "@/app/components/AdminFilters";
+import { AdminMatchCard } from "@/app/components/AdminMatchCard";
+import AdminPreCopaPanel from "@/app/components/AdminPreCopaPanel";
 import { Toast } from "@/app/components/Toast";
-import { fetchAdminMatches, updateMatchScore, finalizeMatch, getPredictionsOpenSetting, setPredictionsOpenSetting } from "@/app/lib/matches";
+import { getPredictionsOpenSetting, setPredictionsOpenSetting, updateMatchScore } from "@/app/lib/matches";
+import { fetchAdminMatches, finalizeMatchResult, reopenMatchResult, type AdminMatch } from "@/app/lib/admin";
 import { recalculateRankings } from "@/app/lib/rankings";
 import { importCopa2026Data, checkCopa2026Imported } from "@/app/lib/importCopa2026";
-import type { Match } from "@/app/types";
 
 export default function AdminPage() {
   const { user, loading } = useAuth();
   const isAdmin = useIsAdmin();
-  const [matches, setMatches] = useState<Match[]>([]);
+  const [matches, setMatches] = useState<AdminMatch[]>([]);
+  const [phaseFilter, setPhaseFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [loadingData, setLoadingData] = useState(true);
-  const [isBusy, setIsBusy] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
-  const [predictionsOpen, setPredictionsOpen] = useState(true);
+  const [processing, setProcessing] = useState(false);
   const [imported, setImported] = useState(false);
+  const [predictionsOpen, setPredictionsOpen] = useState(true);
+  const [toast, setToast] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
+
+  const finishedCount = useMemo(
+    () => matches.filter((item) => item.is_finished || item.status === "finished").length,
+    [matches]
+  );
+
+  const pendingCount = useMemo(() => matches.length - finishedCount, [matches.length, finishedCount]);
 
   useEffect(() => {
     if (!user || !isAdmin) return;
 
-    const loadAdminData = async () => {
+    const loadData = async () => {
       setLoadingData(true);
       try {
-        const [matchList, open, alreadyImported] = await Promise.all([
-          fetchAdminMatches(),
+        const [adminMatches, open, alreadyImported] = await Promise.all([
+          fetchAdminMatches(phaseFilter, statusFilter),
           getPredictionsOpenSetting(),
           checkCopa2026Imported(),
         ]);
-        setMatches(matchList);
+        setMatches(adminMatches);
         setPredictionsOpen(open);
         setImported(alreadyImported);
       } catch (error) {
         console.error(error);
+        setToast({ type: "error", text: "Falha ao carregar dados administrativos." });
       } finally {
         setLoadingData(false);
       }
     };
 
-    loadAdminData();
-  }, [user, isAdmin]);
+    loadData();
+  }, [user, isAdmin, phaseFilter, statusFilter]);
 
   const showToast = (type: "success" | "error" | "info", text: string) => {
-    setMessage({ type, text });
-    window.setTimeout(() => setMessage(null), 4500);
+    setToast({ type, text });
+    window.setTimeout(() => setToast(null), 5000);
+  };
+
+  const refreshMatches = async () => {
+    setLoadingData(true);
+    try {
+      const adminMatches = await fetchAdminMatches(phaseFilter, statusFilter);
+      setMatches(adminMatches);
+    } catch (error) {
+      console.error(error);
+      showToast("error", "Não foi possível atualizar a lista de partidas.");
+    } finally {
+      setLoadingData(false);
+    }
   };
 
   const handleImport = async () => {
-    setIsBusy(true);
+    setProcessing(true);
     try {
       const alreadyImported = await checkCopa2026Imported();
       if (alreadyImported) {
@@ -59,20 +84,21 @@ export default function AdminPage() {
         setImported(true);
         return;
       }
+
       await importCopa2026Data();
       showToast("success", "Dados da Copa importados com sucesso.");
       setImported(true);
-      const matchList = await fetchAdminMatches();
-      setMatches(matchList);
+      refreshMatches();
     } catch (error) {
+      console.error(error);
       showToast("error", "Falha ao importar dados da Copa.");
     } finally {
-      setIsBusy(false);
+      setProcessing(false);
     }
   };
 
   const handleTogglePredictions = async () => {
-    setIsBusy(true);
+    setProcessing(true);
     try {
       const nextState = !predictionsOpen;
       const success = await setPredictionsOpenSetting(nextState);
@@ -83,55 +109,92 @@ export default function AdminPage() {
         showToast("error", "Não foi possível alterar o status dos palpites.");
       }
     } catch (error) {
+      console.error(error);
       showToast("error", "Erro ao atualizar status de palpites.");
     } finally {
-      setIsBusy(false);
+      setProcessing(false);
+    }
+  };
+
+  const handleSaveScore = async (matchId: string, homeScore: number, awayScore: number) => {
+    setProcessing(true);
+    try {
+      const success = await updateMatchScore(matchId, homeScore, awayScore);
+      if (!success) {
+        showToast("error", "Falha ao salvar o placar.");
+        return;
+      }
+
+      setMatches((current) =>
+        current.map((match) =>
+          match.id === matchId ? { ...match, home_score: homeScore, away_score: awayScore } : match
+        )
+      );
+      showToast("success", "Placar salvo com sucesso.");
+    } catch (error) {
+      console.error(error);
+      showToast("error", "Erro ao salvar o placar.");
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleFinalizeMatch = async (matchId: string, homeScore: number, awayScore: number) => {
+    setProcessing(true);
+    try {
+      const result = await finalizeMatchResult(matchId, homeScore, awayScore);
+      if (!result?.success) {
+        showToast("error", result?.error || "Não foi possível finalizar a partida.");
+        return;
+      }
+
+      setMatches((current) =>
+        current.map((match) =>
+          match.id === matchId ? { ...match, home_score: homeScore, away_score: awayScore, is_finished: true, status: "finished" } : match
+        )
+      );
+      showToast("success", "Partida finalizada e rankings recalculados.");
+    } catch (error) {
+      console.error(error);
+      showToast("error", error instanceof Error ? error.message : "Erro ao finalizar a partida.");
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleReopenMatch = async (matchId: string) => {
+    setProcessing(true);
+    try {
+      const result = await reopenMatchResult(matchId);
+      if (!result?.success) {
+        showToast("error", result?.error || "Não foi possível reabrir a partida.");
+        return;
+      }
+
+      setMatches((current) =>
+        current.map((match) =>
+          match.id === matchId ? { ...match, is_finished: false, status: "pending" } : match
+        )
+      );
+      showToast("success", "Partida reaberta e pontos reinicializados.");
+    } catch (error) {
+      console.error(error);
+      showToast("error", error instanceof Error ? error.message : "Erro ao reabrir a partida.");
+    } finally {
+      setProcessing(false);
     }
   };
 
   const handleRecalculateRanking = async () => {
-    setIsBusy(true);
+    setProcessing(true);
     try {
       await recalculateRankings();
       showToast("success", "Ranking recalculado com sucesso.");
     } catch (error) {
-      showToast("error", "Erro ao recalcular ranking.");
+      console.error(error);
+      showToast("error", "Erro ao recalcular o ranking.");
     } finally {
-      setIsBusy(false);
-    }
-  };
-
-  const handleUpdateScore = async (matchId: string, homeScore: number, awayScore: number) => {
-    setIsBusy(true);
-    try {
-      const success = await updateMatchScore(matchId, homeScore, awayScore);
-      if (!success) {
-        showToast("error", "Falha ao atualizar o placar.");
-      } else {
-        showToast("success", "Placar atualizado com sucesso.");
-        setMatches((current) =>
-          current.map((match) =>
-            match.id === matchId ? { ...match, home_score: homeScore, away_score: awayScore } : match
-          )
-        );
-      }
-    } finally {
-      setIsBusy(false);
-    }
-  };
-
-  const handleFinalizeMatch = async (matchId: string) => {
-    setIsBusy(true);
-    try {
-      const success = await finalizeMatch(matchId);
-      if (!success) {
-        showToast("error", "Não foi possível finalizar essa partida. Verifique se o placar está definido.");
-        return;
-      }
-      showToast("success", "Partida finalizada e bloqueada com sucesso.");
-      setMatches((current) => current.map((match) => (match.id === matchId ? { ...match, is_finished: true, status: "finished" } : match)));
-    } finally {
-      setIsBusy(false);
+      setProcessing(false);
     }
   };
 
@@ -162,21 +225,21 @@ export default function AdminPage() {
 
   return (
     <main className="min-h-full bg-[radial-gradient(circle_at_top,_rgba(0,255,178,0.14),_transparent_28%),_linear-gradient(180deg,#04070f_0%,#070b16_100%)] px-4 py-8 text-white">
-      {message ? <Toast type={message.type} message={message.text} /> : null}
+      {toast ? <Toast type={toast.type} message={toast.text} /> : null}
       <div className="mx-auto max-w-6xl space-y-8">
         <header className="rounded-2xl border border-[#00ffb2]/20 bg-gradient-to-br from-[#081116] to-[#070b16] p-6 shadow-lg">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-xs uppercase tracking-widest text-[#00ffb2]">Administração</p>
               <h1 className="mt-2 text-3xl font-bold text-white">Painel de Controle</h1>
-              <p className="mt-1 text-sm text-gray-400">Importe, finalize partidas, recalcule rankings e gerencie palpites.</p>
+              <p className="mt-1 text-sm text-gray-400">Gerencie partidas oficiais, resultados pré-copa e recompute rankings.</p>
             </div>
             <div className="flex flex-wrap gap-3">
               <Link href="/" className="rounded-2xl border border-[#00ffb2]/20 bg-white/5 px-4 py-2 text-sm text-white hover:bg-white/10">
                 Voltar ao início
               </Link>
               <Link href="/pre-copa" className="rounded-2xl bg-[#00b2ff] px-4 py-2 text-sm font-semibold text-black hover:bg-[#8bc8ff]">
-                Palpites Pré-Copa
+                Painel Pré-Copa
               </Link>
             </div>
           </div>
@@ -185,30 +248,33 @@ export default function AdminPage() {
         <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
           <div className="space-y-4">
             <div className="rounded-3xl border border-[#00ffb2]/20 bg-slate-950/90 p-6">
-              <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                   <h2 className="text-xl font-semibold text-white">Ações rápidas</h2>
                   <p className="mt-1 text-sm text-slate-400">Use os controles abaixo para administrar o bolão.</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button
+                    type="button"
                     onClick={handleImport}
-                    disabled={isBusy}
-                    className="rounded-2xl bg-gradient-to-r from-[#00ffb2] to-[#00b2ff] px-4 py-3 text-sm font-semibold text-slate-950 hover:shadow-lg hover:shadow-[#00ffb2]/30 disabled:opacity-60"
+                    disabled={processing}
+                    className="rounded-2xl bg-gradient-to-r from-[#00ffb2] to-[#00b2ff] px-4 py-3 text-sm font-semibold text-slate-950 hover:shadow-lg hover:shadow-[#00ffb2]/30 disabled:opacity-50"
                   >
                     {imported ? "Dados importados" : "Importar Copa 2026"}
                   </button>
                   <button
+                    type="button"
                     onClick={handleTogglePredictions}
-                    disabled={isBusy}
-                    className="rounded-2xl border border-[#00ffb2]/20 bg-[#081116] px-4 py-3 text-sm text-[#00ffb2] hover:bg-[#0c1621] disabled:opacity-60"
+                    disabled={processing}
+                    className="rounded-2xl border border-[#00ffb2]/20 bg-[#081116] px-4 py-3 text-sm text-[#00ffb2] hover:bg-[#0c1621] disabled:opacity-50"
                   >
                     {predictionsOpen ? "Fechar palpites" : "Abrir palpites"}
                   </button>
                   <button
+                    type="button"
                     onClick={handleRecalculateRanking}
-                    disabled={isBusy}
-                    className="rounded-2xl border border-[#00ffb2]/20 bg-[#04070f] px-4 py-3 text-sm text-[#00ffb2] hover:bg-[#0b1a25] disabled:opacity-60"
+                    disabled={processing}
+                    className="rounded-2xl border border-[#00ffb2]/20 bg-[#04070f] px-4 py-3 text-sm text-[#00ffb2] hover:bg-[#0b1a25] disabled:opacity-50"
                   >
                     Recalcular ranking
                   </button>
@@ -216,28 +282,82 @@ export default function AdminPage() {
               </div>
             </div>
 
-            <AdminPanel jogos={matches} onUpdateScore={handleUpdateScore} onMarkFinished={handleFinalizeMatch} isBusy={isBusy} />
+            <div className="rounded-3xl border border-[#00ffb2]/20 bg-slate-950/90 p-6">
+              <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.24em] text-[#00ffb2]">Filtros</p>
+                  <h3 className="mt-2 text-lg font-semibold text-white">Filtrar partidas</h3>
+                </div>
+              </div>
+
+              <AdminFilters
+                phase={phaseFilter}
+                status={statusFilter}
+                onPhaseChange={setPhaseFilter}
+                onStatusChange={setStatusFilter}
+                onRefresh={refreshMatches}
+                isLoading={loadingData}
+              />
+            </div>
+
+            <div className="rounded-3xl border border-[#00ffb2]/20 bg-slate-950/90 p-6">
+              <div className="mb-6 grid gap-3 sm:grid-cols-3">
+                <div className="rounded-3xl bg-[#081116] p-4">
+                  <p className="text-sm text-slate-400">Partidas carregadas</p>
+                  <p className="mt-3 text-3xl font-semibold text-white">{matches.length}</p>
+                </div>
+                <div className="rounded-3xl bg-[#081116] p-4">
+                  <p className="text-sm text-slate-400">Finalizadas</p>
+                  <p className="mt-3 text-3xl font-semibold text-emerald-400">{finishedCount}</p>
+                </div>
+                <div className="rounded-3xl bg-[#081116] p-4">
+                  <p className="text-sm text-slate-400">Pendentes</p>
+                  <p className="mt-3 text-3xl font-semibold text-orange-400">{pendingCount}</p>
+                </div>
+              </div>
+
+              {loadingData ? (
+                <div className="rounded-3xl border border-dashed border-white/10 bg-[#0b1320] p-8 text-center text-slate-400">Carregando partidas...</div>
+              ) : matches.length === 0 ? (
+                <div className="rounded-3xl border border-dashed border-white/10 bg-[#0b1320] p-8 text-center text-slate-400">Nenhuma partida encontrada para os filtros selecionados.</div>
+              ) : (
+                <div className="space-y-4">
+                  {matches.map((match) => (
+                    <AdminMatchCard
+                      key={match.id}
+                      match={match}
+                      onSaveScore={handleSaveScore}
+                      onFinalizeMatch={handleFinalizeMatch}
+                      onReopenMatch={handleReopenMatch}
+                      isProcessing={processing}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <aside className="space-y-4">
             <div className="rounded-3xl border border-[#00ffb2]/20 bg-slate-950/90 p-6">
-              <h3 className="text-lg font-semibold text-[#00ffb2]">Status do sistema</h3>
-              <div className="mt-4 space-y-3 text-sm text-slate-300">
-                <p>
-                  <span className="font-semibold text-white">Previsão de palpites:</span> {predictionsOpen ? "Aberto" : "Fechado"}
-                </p>
-                <p>
-                  <span className="font-semibold text-white">Importação:</span> {imported ? "Concluída" : "Não realizada"}
-                </p>
-                <p>
-                  <span className="font-semibold text-white">Jogos carregados:</span> {matches.length}
-                </p>
-              </div>
+              <h3 className="text-lg font-semibold text-[#00ffb2]">Painel Pré-Copa</h3>
+              <p className="mt-2 text-sm text-slate-400">Atualize resultados oficiais e recalcule pontos de Pre-Copa.</p>
             </div>
 
+            <AdminPreCopaPanel />
+
             <div className="rounded-3xl border border-[#00ffb2]/20 bg-slate-950/90 p-6">
-              <h3 className="text-lg font-semibold text-white">Admin log</h3>
-              <p className="mt-3 text-sm text-slate-400">Apenas administradores conseguem ver esta página. Os controles aqui são definitivos.</p>
+              <h3 className="text-lg font-semibold text-white">Status de administração</h3>
+              <div className="mt-4 space-y-3 text-sm text-slate-300">
+                <p>
+                  <span className="font-semibold text-white">Palpites:</span> {predictionsOpen ? "Aberto" : "Fechado"}
+                </p>
+                <p>
+                  <span className="font-semibold text-white">Dados importados:</span> {imported ? "Sim" : "Não"}
+                </p>
+                <p>
+                  <span className="font-semibold text-white">Última atualização:</span> {new Date().toLocaleString("pt-BR")}
+                </p>
+              </div>
             </div>
           </aside>
         </section>

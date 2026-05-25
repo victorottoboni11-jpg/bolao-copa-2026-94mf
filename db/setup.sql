@@ -7,6 +7,9 @@ ALTER TABLE IF EXISTS users
 ALTER TABLE IF EXISTS users
   ADD COLUMN IF NOT EXISTS created_at timestamptz DEFAULT now();
 
+ALTER TABLE IF EXISTS profiles
+  ADD COLUMN IF NOT EXISTS is_admin boolean DEFAULT false;
+
 -- Tabela de palpites dos jogos
 CREATE TABLE IF NOT EXISTS predictions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -40,11 +43,13 @@ CREATE TABLE IF NOT EXISTS pre_copa_predictions (
   user_id uuid NOT NULL REFERENCES users(id),
   champion_team text NOT NULL,
   runner_up_team text NOT NULL,
+  golden_ball_player text NOT NULL,
   top_scorer_player text NOT NULL,
   top_scorer_goals integer NOT NULL,
-  best_goalkeeper_player text NOT NULL,
-  best_player text NOT NULL,
-  tournament_revelation text NOT NULL,
+  most_assists_player text NOT NULL,
+  most_assists_count integer NOT NULL,
+  fair_play_team text NOT NULL,
+  revelation_player text NOT NULL,
   points integer DEFAULT 0,
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now(),
@@ -52,6 +57,21 @@ CREATE TABLE IF NOT EXISTS pre_copa_predictions (
 );
 
 -- Configuração administrativa de palpites abertos/fechados
+CREATE TABLE IF NOT EXISTS official_pre_copa_outcomes (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  champion_team text NOT NULL,
+  runner_up_team text NOT NULL,
+  top_scorer_player text NOT NULL,
+  top_scorer_goals integer NOT NULL,
+  golden_ball_player text NOT NULL,
+  best_goalkeeper_player text NOT NULL,
+  most_assists_player text NOT NULL,
+  most_assists_count integer DEFAULT 0,
+  fair_play_team text NOT NULL,
+  revelation_player text NOT NULL,
+  updated_at timestamptz DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS admin_settings (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   predictions_open boolean DEFAULT true,

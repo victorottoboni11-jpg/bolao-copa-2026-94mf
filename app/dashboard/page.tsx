@@ -78,7 +78,9 @@ export default function DashboardPage() {
   const myTotalPoints = useMemo(() => {
     return myPredictionEntries.reduce((sum, prediction) => {
       const match = matches.find((item) => item.id === prediction.match_id);
-      return match ? sum + calculateMatchPoints(prediction, match) : sum;
+      if (!match) return sum;
+      const result = calculateMatchPoints(prediction, match);
+      return sum + result.points;
     }, 0);
   }, [matches, myPredictionEntries]);
 
