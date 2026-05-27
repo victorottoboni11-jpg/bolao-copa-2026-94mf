@@ -39,8 +39,26 @@ export async function GET(request: NextRequest) {
 
     // Get query parameters
     const { searchParams } = new URL(request.url);
-    const phase = searchParams.get("phase");
-    const status = searchParams.get("status");
+    const phase = (searchParams.get("phase") || "all").toLowerCase();
+    const status = (searchParams.get("status") || "all").toLowerCase();
+
+    const phaseAliases: Record<string, string[]> = {
+      all: [],
+      friendly: ["friendly"],
+      group: ["group", "group_stage"],
+      knockout: ["round_of_32", "round_of_16", "quarterfinal", "quarterfinals", "semifinal", "semifinals", "third_place", "final"],
+    };
+
+    const statusAliases: Record<string, string[]> = {
+      all: [],
+      pending: ["pending", "scheduled"],
+      scheduled: ["scheduled", "pending"],
+      live: ["live"],
+      finished: ["finished", "complete", "completed"],
+    };
+
+    const normalizedPhaseValues = phaseAliases[phase] || [phase];
+    const normalizedStatusValues = statusAliases[status] || [status];
 
     // Build query
     let query = supabase
@@ -58,26 +76,44 @@ export async function GET(request: NextRequest) {
         status,
         is_finished,
         kickoff_at,
+        match_date,
         stadium,
-        home_team:home_team_id (id, name, fifa_code, flag_url),
-        away_team:away_team_id (id, name, fifa_code, flag_url)
+        home_team:teams!home_team_id (id, name, fifa_code, flag_url),
+        away_team:teams!away_team_id (id, name, fifa_code, flag_url)
       `
       )
-      .order("kickoff_at", { ascending: true });
+      .order("match_date", { ascending: true });
 
     // Apply filters
-    if (phase && phase !== "all") {
-      query = query.eq("phase", phase);
+    if (normalizedPhaseValues.length > 0) {
+      query = query.in("phase", normalizedPhaseValues);
     }
-    if (status && status !== "all") {
-      query = query.eq("status", status);
+    if (normalizedStatusValues.length > 0) {
+      query = query.in("status", normalizedStatusValues);
     }
 
     const { data: matches, error } = await query;
 
     if (error) {
+      console.error("[admin/results] query failed", {
+        error: error.message,
+        phase,
+        status,
+        phaseValues: normalizedPhaseValues,
+        statusValues: normalizedStatusValues,
+      });
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
+
+    const phasesFound = Array.from(new Set((matches || []).map((match: any) => match.phase).filter(Boolean))).sort();
+    const statusesFound = Array.from(new Set((matches || []).map((match: any) => match.status || (match.is_finished ? "finished" : "pending")).filter(Boolean))).sort();
+
+    console.log("[admin/results] debug", {
+      totalRows: (matches || []).length,
+      filters: { phase, status },
+      phasesFound,
+      statusesFound,
+    });
 
     return NextResponse.json({
       success: true,
@@ -217,37 +253,59 @@ export async function POST(request: NextRequest) {
         console.error("Error updating predictions:", updatePredError);
       }
 
-      // Recalculate rankings for affected users
+      // Recalculate rankings for affected users in a single batched operation
       const userIds = [...new Set(predictions.map((p) => p.user_id))];
 
-      for (const userId of userIds) {
-        const { data: userPreds } = await supabase
+      if (userIds.length > 0) {
+        // Fetch all predictions points for affected users
+        const { data: userPredsData, error: userPredsError } = await supabase
           .from("predictions")
-          .select("points")
-          .eq("user_id", userId);
+          .select("user_id, points")
+          .in("user_id", userIds);
 
-        const matchPoints = userPreds?.reduce((sum, p) => sum + (p.points || 0), 0) || 0;
+        if (userPredsError) {
+          console.error("Error fetching user predictions for rankings:", userPredsError);
+        }
 
+        // Sum points per user
+        const pointsByUser = new Map<string, number>();
+        (userPredsData || []).forEach((row: any) => {
+          const uid = String(row.user_id);
+          const pts = Number(row.points || 0);
+          pointsByUser.set(uid, (pointsByUser.get(uid) || 0) + pts);
+        });
+
+        // Fetch pre-copa points for affected users in one query
         const { data: preCopaData } = await supabase
           .from("pre_copa_predictions")
-          .select("points")
-          .eq("user_id", userId)
-          .single();
+          .select("user_id, points")
+          .in("user_id", userIds);
 
-        const preCopaPoints = preCopaData?.points || 0;
-        const totalPoints = matchPoints + preCopaPoints;
+        const preCopaByUser = new Map<string, number>();
+        (preCopaData || []).forEach((row: any) => {
+          preCopaByUser.set(String(row.user_id), Number(row.points || 0));
+        });
 
-        await supabase
+        // Build rankings upsert payload
+        const rankingsUpserts = userIds.map((uid) => {
+          const matchPoints = pointsByUser.get(uid) || 0;
+          const preCopaPoints = preCopaByUser.get(uid) || 0;
+          return {
+            user_id: uid,
+            total_points: matchPoints + preCopaPoints,
+            pre_copa_points: preCopaPoints,
+            updated_at: new Date().toISOString(),
+          };
+        });
+
+        // Upsert all rankings in one call to avoid duplicate recalculations
+        const { error: rankingError } = await supabase
           .from("rankings")
-          .upsert(
-            {
-              user_id: userId,
-              total_points: totalPoints,
-              pre_copa_points: preCopaPoints,
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: "user_id" }
-          );
+          .upsert(rankingsUpserts, { onConflict: "user_id" });
+
+        if (rankingError) {
+          console.error("Error upserting rankings:", rankingError);
+        }
       }
     }
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { formatBrazilTime } from "@/app/lib/matchDate";
 import type { Match, Team } from "../types/index";
 
 interface MatchResult {
@@ -252,7 +253,7 @@ export default function AdminResultPanel() {
                       </div>
                     </div>
                     <div className="text-xs text-slate-400 mt-1">
-                      {match.kickoff_at && new Date(match.kickoff_at).toLocaleString("pt-BR")}
+                      {formatBrazilTime(match.kickoff_at, "full")}
                     </div>
                   </div>
 

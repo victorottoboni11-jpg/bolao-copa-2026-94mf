@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { AuthPanel } from "./components/AuthPanel";
-import { AdminPanel as AdminPanelNew } from "./components/AdminPanelNew";
 import { AdminGuard } from "./components/AdminGuard";
 import { useAuth } from "./lib/auth";
 
@@ -96,7 +95,16 @@ export default function Home() {
 
         {/* Admin Section */}
         <AdminGuard>
-          <AdminPanelNew />
+          <section className="rounded-2xl border border-[#00ffb2]/20 bg-gradient-to-br from-[#081116] to-[#070b16] p-6 shadow-lg">
+            <h2 className="text-xl font-semibold text-white">Painel administrativo</h2>
+            <p className="mt-2 text-sm text-slate-400">Gerencie partidas, resultados e rankings na área administrativa.</p>
+            <a
+              href="/admin"
+              className="mt-4 inline-flex rounded-2xl bg-gradient-to-r from-[#00ffb2] to-[#00b2ff] px-4 py-2 text-sm font-semibold text-slate-950 hover:shadow-lg hover:shadow-[#00ffb2]/30 transition-all duration-300"
+            >
+              Abrir painel admin
+            </a>
+          </section>
         </AdminGuard>
 
         {/* Dashboard Links */}
@@ -112,22 +120,12 @@ export default function Home() {
           </a>
 
           <a
-            href="/fase-de-grupos"
+            href="/grupos"
             className="p-6 bg-gradient-to-br from-[#081116] to-[#070b16] border border-[#00b2ff]/20 rounded-xl hover:border-[#00b2ff]/50 transition-all hover:shadow-lg hover:shadow-[#00b2ff]/10"
           >
-            <h3 className="font-semibold text-[#00b2ff] mb-2">🏆 Fase de Grupos</h3>
+            <h3 className="font-semibold text-[#00b2ff] mb-2">🏆 Grupos</h3>
             <p className="text-sm text-gray-400">
-              Veja os palpites e jogos da fase de grupos
-            </p>
-          </a>
-
-          <a
-            href="/mata-mata"
-            className="p-6 bg-gradient-to-br from-[#081116] to-[#070b16] border border-[#00ffb2]/20 rounded-xl hover:border-[#00ffb2]/50 transition-all hover:shadow-lg hover:shadow-[#00ffb2]/10"
-          >
-            <h3 className="font-semibold text-[#00ffb2] mb-2">🥅 Mata-Mata</h3>
-            <p className="text-sm text-gray-400">
-              Acesse os jogos eliminatórios e faça seus palpites
+              Veja a classificação dos grupos e confrontos
             </p>
           </a>
 

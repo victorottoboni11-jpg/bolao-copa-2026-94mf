@@ -11,7 +11,6 @@ import { Toast } from "@/app/components/Toast";
 import { getPredictionsOpenSetting, setPredictionsOpenSetting, updateMatchScore } from "@/app/lib/matches";
 import { fetchAdminMatches, finalizeMatchResult, reopenMatchResult, type AdminMatch } from "@/app/lib/admin";
 import { recalculateRankings } from "@/app/lib/rankings";
-import { importCopa2026Data, checkCopa2026Imported } from "@/app/lib/importCopa2026";
 
 export default function AdminPage() {
   const { user, loading } = useAuth();
@@ -21,7 +20,6 @@ export default function AdminPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [loadingData, setLoadingData] = useState(true);
   const [processing, setProcessing] = useState(false);
-  const [imported, setImported] = useState(false);
   const [predictionsOpen, setPredictionsOpen] = useState(true);
   const [toast, setToast] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
 
@@ -38,14 +36,12 @@ export default function AdminPage() {
     const loadData = async () => {
       setLoadingData(true);
       try {
-        const [adminMatches, open, alreadyImported] = await Promise.all([
+        const [adminMatches, open] = await Promise.all([
           fetchAdminMatches(phaseFilter, statusFilter),
           getPredictionsOpenSetting(),
-          checkCopa2026Imported(),
         ]);
         setMatches(adminMatches);
         setPredictionsOpen(open);
-        setImported(alreadyImported);
       } catch (error) {
         console.error(error);
         setToast({ type: "error", text: "Falha ao carregar dados administrativos." });
@@ -72,28 +68,6 @@ export default function AdminPage() {
       showToast("error", "Não foi possível atualizar a lista de partidas.");
     } finally {
       setLoadingData(false);
-    }
-  };
-
-  const handleImport = async () => {
-    setProcessing(true);
-    try {
-      const alreadyImported = await checkCopa2026Imported();
-      if (alreadyImported) {
-        showToast("info", "Importação já realizada anteriormente.");
-        setImported(true);
-        return;
-      }
-
-      await importCopa2026Data();
-      showToast("success", "Dados da Copa importados com sucesso.");
-      setImported(true);
-      refreshMatches();
-    } catch (error) {
-      console.error(error);
-      showToast("error", "Falha ao importar dados da Copa.");
-    } finally {
-      setProcessing(false);
     }
   };
 
@@ -256,14 +230,6 @@ export default function AdminPage() {
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
-                    onClick={handleImport}
-                    disabled={processing}
-                    className="rounded-2xl bg-gradient-to-r from-[#00ffb2] to-[#00b2ff] px-4 py-3 text-sm font-semibold text-slate-950 hover:shadow-lg hover:shadow-[#00ffb2]/30 disabled:opacity-50"
-                  >
-                    {imported ? "Dados importados" : "Importar Copa 2026"}
-                  </button>
-                  <button
-                    type="button"
                     onClick={handleTogglePredictions}
                     disabled={processing}
                     className="rounded-2xl border border-[#00ffb2]/20 bg-[#081116] px-4 py-3 text-sm text-[#00ffb2] hover:bg-[#0c1621] disabled:opacity-50"
@@ -350,9 +316,6 @@ export default function AdminPage() {
               <div className="mt-4 space-y-3 text-sm text-slate-300">
                 <p>
                   <span className="font-semibold text-white">Palpites:</span> {predictionsOpen ? "Aberto" : "Fechado"}
-                </p>
-                <p>
-                  <span className="font-semibold text-white">Dados importados:</span> {imported ? "Sim" : "Não"}
                 </p>
                 <p>
                   <span className="font-semibold text-white">Última atualização:</span> {new Date().toLocaleString("pt-BR")}

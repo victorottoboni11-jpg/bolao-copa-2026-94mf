@@ -1,6 +1,5 @@
 import { supabase } from "./supabase";
 import type { Prediction } from "../types";
-import { canEditPrediction as canEditPredictionUtil, isPredictionLocked as isPredictionLockedUtil } from "./matchDate";
 
 export async function getUserPredictions(userId: string): Promise<Prediction[]> {
   const { data, error } = await supabase
@@ -46,38 +45,48 @@ export async function savePrediction(
   predictedAway: number
 ): Promise<Prediction | null> {
   try {
-    const payload = [
-      {
-        user_id: userId,
-        match_id: matchId,
-        predicted_home: predictedHome,
-        predicted_away: predictedAway,
-        updated_at: new Date().toISOString(),
+    // Use server API so locking is enforced server-side (5 minutes before kickoff)
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !sessionData?.session?.access_token) {
+      throw new Error("Session not available");
+    }
+
+    const res = await fetch("/api/predictions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${sessionData.session.access_token}`,
+        "Content-Type": "application/json",
       },
-    ];
+      body: JSON.stringify({ matchId, predictedHome, predictedAway }),
+    });
 
-    const { data, error } = await supabase
-      .from("predictions")
-      .upsert(payload, { onConflict: "user_id,match_id" })
-      .select("*")
-      .single();
-
-    if (error) {
-      console.error("Erro ao salvar palpite:", error);
+    if (!res.ok) {
+      const payload = await res.json().catch(() => null);
+      console.error("Failed to save prediction (server):", payload || res.statusText);
       return null;
     }
 
-    return data || null;
-  } catch (error) {
-    console.error("Erro inesperado ao salvar palpite:", error);
+    const payload = await res.json();
+    return payload.prediction || null;
+  } catch (err) {
+    console.error("Erro ao salvar palpite:", err);
     return null;
   }
 }
 
-export function canEditPrediction(matchDate?: string | null): boolean {
-  return canEditPredictionUtil(matchDate);
-}
-
 export function isPredictionLocked(matchDate?: string | null, isOpen = true) {
-  return isPredictionLockedUtil(matchDate, isOpen);
+  if (!isOpen) {
+    return true;
+  }
+
+  if (!matchDate) {
+    return false;
+  }
+
+  const matchTime = new Date(matchDate).getTime();
+  if (Number.isNaN(matchTime)) {
+    return false;
+  }
+
+  return Date.now() >= matchTime;
 }

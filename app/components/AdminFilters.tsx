@@ -11,14 +11,9 @@ interface AdminFiltersProps {
 
 const phaseOptions = [
   { value: "all", label: "Todas as fases" },
-  { value: "group", label: "Fase de Grupos" },
-  { value: "round_of_32", label: "Oitavas de Final" },
-  { value: "round_of_16", label: "Oitavas" },
-  { value: "quarterfinal", label: "Quartas" },
-  { value: "semifinal", label: "Semifinais" },
-  { value: "third_place", label: "Terceiro Lugar" },
-  { value: "final", label: "Final" },
   { value: "friendly", label: "Amistoso" },
+  { value: "group", label: "Fase de Grupos" },
+  { value: "knockout", label: "Mata-Mata" },
 ];
 
 const statusOptions = [

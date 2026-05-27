@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { formatBrazilTime } from "@/app/lib/matchDate";
 import type { AdminMatch } from "@/app/lib/admin";
 
 interface AdminMatchCardProps {
@@ -23,7 +24,7 @@ export function AdminMatchCard({ match, onSaveScore, onFinalizeMatch, onReopenMa
   const isFinished = match.is_finished === true || match.status === "finished";
   const homeTeamName = typeof match.home_team === "string" ? match.home_team : match.home_team?.name ?? "Mandante";
   const awayTeamName = typeof match.away_team === "string" ? match.away_team : match.away_team?.name ?? "Visitante";
-  const kickoffLabel = match.kickoff_at ? new Date(match.kickoff_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : null;
+  const kickoffLabel = formatBrazilTime(match.kickoff_at, "full");
 
   const handleSave = async () => {
     const home = Number(homeScore);

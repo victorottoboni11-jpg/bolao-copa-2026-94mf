@@ -23,22 +23,70 @@ async function getAdminHeaders() {
 
 export async function fetchAdminMatches(phase = "all", status = "all"): Promise<AdminMatch[]> {
   try {
-    const params = new URLSearchParams();
-    if (phase && phase !== "all") params.set("phase", phase);
-    if (status && status !== "all") params.set("status", status);
+    const normalizedPhase = (phase || "all").toLowerCase();
+    const normalizedStatus = (status || "all").toLowerCase();
 
-    const url = `/api/admin/results${params.toString() ? `?${params.toString()}` : ""}`;
-    const response = await fetch(url, {
-      headers: await getAdminHeaders(),
-    });
+    let query = supabase
+      .from("matches")
+      .select(`
+        id,
+        match_number,
+        phase,
+        group_name,
+        home_team_id,
+        away_team_id,
+        home_score,
+        away_score,
+        status,
+        is_finished,
+        kickoff_at,
+        match_date,
+        stadium,
+        home_team:home_team_id (id, name, fifa_code, flag_url),
+        away_team:away_team_id (id, name, fifa_code, flag_url)
+      `)
+      .order("match_date", { ascending: true });
 
-    if (!response.ok) {
-      const payload = await response.json().catch(() => null);
-      throw new Error(payload?.error || response.statusText || "Failed to load admin matches");
+    if (normalizedPhase === "friendly") {
+      query = query.eq("phase", "friendly");
+    } else if (normalizedPhase === "group") {
+      query = query.in("phase", ["group", "group_stage"]);
+    } else if (normalizedPhase === "knockout") {
+      query = query.in("phase", ["round_of_32", "round_of_16", "quarterfinal", "quarterfinals", "semifinal", "semifinals", "third_place", "final"]);
+    } else if (normalizedPhase !== "all") {
+      query = query.eq("phase", normalizedPhase);
     }
 
-    const data = await response.json();
-    return data.matches || [];
+    if (normalizedStatus === "pending") {
+      query = query.in("status", ["pending", "scheduled"]);
+    } else if (normalizedStatus === "finished") {
+      query = query.in("status", ["finished", "completed", "complete"]);
+    } else if (normalizedStatus !== "all") {
+      query = query.eq("status", normalizedStatus);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("[admin] query failed", { error: error.message, phase: normalizedPhase, status: normalizedStatus });
+      throw error;
+    }
+
+    const matches = ((data || []) as any[]).map((match) => ({
+      ...match,
+      home_team: Array.isArray(match.home_team) ? match.home_team[0] ?? null : match.home_team ?? null,
+      away_team: Array.isArray(match.away_team) ? match.away_team[0] ?? null : match.away_team ?? null,
+      kickoff_at: match.kickoff_at ?? match.match_date ?? null,
+    })) as AdminMatch[];
+
+    console.log("[admin] rows returned", {
+      totalRows: matches.length,
+      filters: { phase: normalizedPhase, status: normalizedStatus },
+      phases: Array.from(new Set(matches.map((match) => match.phase).filter(Boolean))).sort(),
+      statuses: Array.from(new Set(matches.map((match) => match.status || (match.is_finished ? "finished" : "pending")).filter(Boolean))).sort(),
+    });
+
+    return matches;
   } catch (error) {
     console.error("Error loading admin matches:", error);
     return [];

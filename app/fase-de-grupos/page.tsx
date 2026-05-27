@@ -6,7 +6,7 @@ import { useAuth } from "@/app/lib/auth";
 import { getAllMatches } from "@/app/lib/importCopa2026";
 import { getPredictionsForMatches, savePrediction, isPredictionLocked } from "@/app/lib/predictions";
 import { getPredictionsOpenSetting } from "@/app/lib/matches";
-import { getMatchKickoffAt } from "@/app/lib/matchDate";
+import { getMatchKickoffAt, compareKickoffTimes, isMatchLocked } from "@/app/lib/matchDate";
 import { isGroupPhase } from "@/app/lib/phases";
 import { MatchCard } from "@/app/components/MatchCard";
 import { Toast } from "@/app/components/Toast";
@@ -71,11 +71,9 @@ export default function FaseDeGruposPage() {
   };
 
   const sortedMatches = useMemo(() => {
-    return [...matches].sort((a, b) => {
-      const dateA = new Date(getMatchKickoffAt(a) ?? "").getTime();
-      const dateB = new Date(getMatchKickoffAt(b) ?? "").getTime();
-      return dateA - dateB;
-    });
+    return [...matches].sort((a, b) =>
+      compareKickoffTimes(getMatchKickoffAt(a), getMatchKickoffAt(b))
+    );
   }, [matches]);
 
   if (loading || !user) {
