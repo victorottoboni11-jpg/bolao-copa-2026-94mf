@@ -108,33 +108,12 @@ function buildTeamSeed() {
   );
 }
 
-const KNOCKOUT_ROUND_OF_32_PAIRS: Array<[string, string]> = [
-  ["1A", "2B"],
-  ["1C", "2D"],
-  ["1E", "2F"],
-  ["1G", "2H"],
-  ["1I", "2J"],
-  ["1K", "2L"],
-  ["1B", "2A"],
-  ["1D", "2C"],
-  ["1F", "2E"],
-  ["1H", "2G"],
-  ["1J", "2I"],
-  ["1L", "2K"],
-  ["Melhor 3º 1", "Melhor 3º 8"],
-  ["Melhor 3º 2", "Melhor 3º 7"],
-  ["Melhor 3º 3", "Melhor 3º 6"],
-  ["Melhor 3º 4", "Melhor 3º 5"],
-];
-
-const KNOCKOUT_MATCH_STADIUM = "A definir";
-
 function buildMatchSeed() {
   let matchNumber = 1;
   return Object.entries(OFFICIAL_GROUPS).flatMap(([group_name, teams]) => {
     const stadium = GROUP_STADIUMS[group_name] ?? "NRG Stadium";
     return GROUP_MATCH_PAIRS.map(([homeIndex, awayIndex]) => {
-      const matchDate = new Date(Date.UTC(2026, 5, 12, 16, 0, 0) + (matchNumber - 1) * 3 * 60 * 60 * 1000);
+      const matchDate = new Date(Date.UTC(2026, 5, 11, 16, 0, 0) + (matchNumber - 1) * 3 * 60 * 60 * 1000);
       return {
         home_team: teams[homeIndex].name,
         away_team: teams[awayIndex].name,
@@ -148,71 +127,15 @@ function buildMatchSeed() {
   });
 }
 
-function buildKnockoutSeed() {
-  const matches: Array<{
-    home_team: string;
-    away_team: string;
-    group_name: string | null;
-    stadium: string;
-    match_date: Date;
-    match_number: number;
-    phase: string;
-  }> = [];
-
-  let matchNumber = 73;
-  const baseDate = Date.UTC(2026, 6, 5, 18, 0, 0);
-
-  const addMatches = (phase: string, pairs: Array<[string, string]>) => {
-    pairs.forEach((pair) => {
-      const matchDate = new Date(baseDate + (matchNumber - 73) * 12 * 60 * 60 * 1000);
-      matches.push({
-        home_team: pair[0],
-        away_team: pair[1],
-        group_name: null,
-        stadium: KNOCKOUT_MATCH_STADIUM,
-        match_date: matchDate,
-        match_number: matchNumber++,
-        phase,
-      });
-    });
-  };
-
-  addMatches("round_of_32", KNOCKOUT_ROUND_OF_32_PAIRS);
-  addMatches("round_of_16", [
-    ["Vencedor 73", "Vencedor 74"],
-    ["Vencedor 75", "Vencedor 76"],
-    ["Vencedor 77", "Vencedor 78"],
-    ["Vencedor 79", "Vencedor 80"],
-    ["Vencedor 81", "Vencedor 82"],
-    ["Vencedor 83", "Vencedor 84"],
-    ["Vencedor 85", "Vencedor 86"],
-    ["Vencedor 87", "Vencedor 88"],
-  ]);
-  addMatches("quarterfinal", [
-    ["Vencedor 89", "Vencedor 90"],
-    ["Vencedor 91", "Vencedor 92"],
-    ["Vencedor 93", "Vencedor 94"],
-    ["Vencedor 95", "Vencedor 96"],
-  ]);
-  addMatches("semifinal", [
-    ["Vencedor 97", "Vencedor 98"],
-    ["Vencedor 99", "Vencedor 100"],
-  ]);
-  addMatches("third_place", [["Perdedor 101", "Perdedor 102"]]);
-  addMatches("final", [["Vencedor 101", "Vencedor 102"]]);
-
-  return matches;
-}
-
 const TEAMS_DATA = buildTeamSeed();
-const MATCHES_DATA = [...buildMatchSeed(), ...buildKnockoutSeed()];
+const MATCHES_DATA = buildMatchSeed();
 
 /**
  * Importa TODOS os dados da Copa 2026 para o Supabase
  * 1. Limpa dados existentes
  * 2. Insere 48 times
  * 3. Obtém IDs dos times
- * 4. Insere 104 partidas (72 grupos + 32 mata-mata)
+ * 4. Insere 72 partidas de grupos
  */
 export async function importCopa2026Data() {
   try {
@@ -272,7 +195,7 @@ export async function importCopa2026Data() {
     console.log(`📊 Mapa contém ${teamMap.size} times`);
 
     // PASSO 5: Preparar dados das partidas
-    console.log("⚙️  Preparando dados das 104 partidas (grupos + mata-mata)...");
+    console.log("⚙️  Preparando dados das 72 partidas...");
     const matchesToInsert = MATCHES_DATA.map((match) => {
       const homeTeamId = teamMap.get(match.home_team);
       const awayTeamId = teamMap.get(match.away_team);
@@ -285,17 +208,15 @@ export async function importCopa2026Data() {
       }
 
       return {
-        home_team_id: homeTeamId || null,
-        away_team_id: awayTeamId || null,
-        home_team: match.home_team,
-        away_team: match.away_team,
+        home_team_id: homeTeamId || "",
+        away_team_id: awayTeamId || "",
         home_score: null,
         away_score: null,
         match_number: match.match_number,
         phase: match.phase,
         group_name: match.group_name,
         stadium: match.stadium,
-        kickoff_at: match.match_date.toISOString(),
+        match_date: match.match_date.toISOString(),
         status: "scheduled",
         is_finished: false,
       };
@@ -303,8 +224,8 @@ export async function importCopa2026Data() {
 
     console.log(`📊 Preparadas ${matchesToInsert.length} partidas para inserção`);
 
-    // PASSO 6: Inserir as 104 partidas
-    console.log("📋 Importando 104 partidas da copa (grupos + mata-mata)...");
+    // PASSO 6: Inserir as 72 partidas
+    console.log("📋 Importando 72 partidas da fase de grupos...");
     const { data: insertedMatches, error: matchesError } = await supabase
       .from("matches")
       .insert(matchesToInsert)
@@ -323,7 +244,7 @@ export async function importCopa2026Data() {
 
     // PASSO 7: Sucesso final
     console.log("🎉🎉🎉 Copa 2026 COMPLETAMENTE importada com sucesso! 🎉🎉🎉");
-    console.log(`   📊 Total: 48 times + 104 partidas (grupos + mata-mata)`);
+    console.log(`   📊 Total: 48 times + 72 partidas`);
     console.log(`   📍 Grupos: A, B, C, D, E, F, G, H, I, J, K, L`);
     console.log(`   🏟️  Estádios oficiais atribuídos`);
 
@@ -342,7 +263,7 @@ export async function importCopa2026Data() {
 }
 
 /**
- * Verifica se os dados já foram importados (48 times + 104 partidas)
+ * Verifica se os dados já foram importados (48 times + 72 partidas)
  */
 export async function checkCopa2026Imported(): Promise<boolean> {
   try {
@@ -354,7 +275,7 @@ export async function checkCopa2026Imported(): Promise<boolean> {
       .from("matches")
       .select("*", { count: "exact" });
 
-    const isImported = (teamCount ?? 0) >= 48 && (matchCount ?? 0) >= 104;
+    const isImported = (teamCount ?? 0) >= 48 && (matchCount ?? 0) >= 72;
 
     console.log(
       `📊 Status: ${teamCount ?? 0} times, ${matchCount ?? 0} partidas`
@@ -389,24 +310,13 @@ export async function getAllMatches() {
   try {
     const { data, error } = await supabase
       .from("matches")
-      .select(`
-        *,
-        home_team_info:home_team_id (
-          id,
-          name,
-          flag_url,
-          fifa_code
-        ),
-        away_team_info:away_team_id (
-          id,
-          name,
-          flag_url,
-          fifa_code
-        )
-      `)
-      .order("kickoff_at", { ascending: true });
+      .select("*")
+      .order("kickoff_at", { ascending: true })
+      .order("match_date", { ascending: true });
 
     if (error) throw error;
+
+    console.log("[matches] raw rows loaded", { total: data?.length ?? 0 });
     return data || [];
   } catch (error) {
     console.error("Erro ao obter matches:", error);
@@ -421,23 +331,10 @@ export async function getGroupMatches(groupName: string) {
   try {
     const { data, error } = await supabase
       .from("matches")
-      .select(`
-        *,
-        home_team_info:home_team_id (
-          id,
-          name,
-          flag_url,
-          fifa_code
-        ),
-        away_team_info:away_team_id (
-          id,
-          name,
-          flag_url,
-          fifa_code
-        )
-      `)
+      .select("*")
       .eq("group_name", groupName)
-      .order("kickoff_at", { ascending: true });
+      .order("kickoff_at", { ascending: true })
+      .order("match_date", { ascending: true });
 
     if (error) throw error;
     return data || [];

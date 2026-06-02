@@ -1,4 +1,5 @@
 import type { Match, Prediction } from "../types";
+import { isGroupPhase, isKnockoutPhase } from "./phases";
 
 // ========== CONSTANTES DE PONTUAÇÃO ==========
 
@@ -84,20 +85,11 @@ export function calculateKnockoutPoints(prediction: Prediction, match: Match): n
 }
 
 function isGroupPhaseMatch(phase?: string, groupName?: string | null) {
-  return phase === "group" || phase === "group_stage" || typeof groupName === "string";
+  return isGroupPhase(phase) || typeof groupName === "string";
 }
 
 function isKnockoutPhaseMatch(phase?: string) {
-  return [
-    "round_of_32",
-    "round_of_16",
-    "quarterfinal",
-    "quarterfinals",
-    "semifinal",
-    "semifinals",
-    "third_place",
-    "final",
-  ].includes(phase ?? "");
+  return isKnockoutPhase(phase);
 }
 
 export function calculateMatchPoints(prediction: Prediction, match: Match) {
@@ -144,14 +136,14 @@ export function calculatePreCopaPoints(
 export function calculateUserPhasePoints(
   predictions: Prediction[],
   matches: Match[],
-  phase: "groups" | "knockout"
+  phase: "group" | "knockout"
 ): number {
   return predictions.reduce((total, prediction) => {
     const match = matches.find((m) => m.id === prediction.match_id);
     if (!match) return total;
 
     const points =
-      phase === "groups" ? calculateGroupStagePoints(prediction, match) : calculateKnockoutPoints(prediction, match);
+      phase === "group" ? calculateGroupStagePoints(prediction, match) : calculateKnockoutPoints(prediction, match);
 
     return total + points;
   }, 0);

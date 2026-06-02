@@ -13,7 +13,12 @@ const phaseOptions = [
   { value: "all", label: "Todas as fases" },
   { value: "friendly", label: "Amistoso" },
   { value: "group", label: "Fase de Grupos" },
-  { value: "knockout", label: "Mata-Mata" },
+  { value: "round_of_32", label: "32 avos" },
+  { value: "round_of_16", label: "Oitavas" },
+  { value: "quarterfinal", label: "Quartas de Final" },
+  { value: "semifinal", label: "Semifinal" },
+  { value: "third_place", label: "Disputa 3º Lugar" },
+  { value: "final", label: "Final" },
 ];
 
 const statusOptions = [

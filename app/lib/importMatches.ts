@@ -5,7 +5,7 @@ const defaultMatches: Omit<Match, "id">[] = [
   {
     home_team: "Brasil",
     away_team: "Argentina",
-    kickoff_at: "2026-06-15T18:00:00Z",
+    match_datetime: "2026-06-15T18:00:00Z",
     stadium: "Estádio Azteca",
     city: "Mexico City",
     group_name: "Demo",
@@ -16,7 +16,7 @@ const defaultMatches: Omit<Match, "id">[] = [
   {
     home_team: "Portugal",
     away_team: "França",
-    kickoff_at: "2026-06-16T20:00:00Z",
+    match_datetime: "2026-06-16T20:00:00Z",
     stadium: "Estádio MetLife",
     city: "New York",
     group_name: "Demo",
@@ -29,19 +29,19 @@ const defaultMatches: Omit<Match, "id">[] = [
 export async function importarJogos() {
   const { data } = await supabase
     .from("matches")
-    .select("home_team,away_team,kickoff_at");
+    .select("home_team,away_team,match_datetime");
 
-  const existingMatches = (data as Array<Pick<Match, "home_team" | "away_team" | "kickoff_at">>) || [];
+  const existingMatches = (data as Array<Pick<Match, "home_team" | "away_team" | "match_datetime">>) || [];
 
   const existingKeys = new Set(
     existingMatches.map(
-      (match) => `${match.home_team}:${match.away_team}:${match.kickoff_at}`
+      (match) => `${match.home_team}:${match.away_team}:${match.match_datetime}`
     )
   );
 
   const newMatches = defaultMatches.filter(
     (match) =>
-      !existingKeys.has(`${match.home_team}:${match.away_team}:${match.kickoff_at}`)
+      !existingKeys.has(`${match.home_team}:${match.away_team}:${match.match_datetime}`)
   );
 
   if (newMatches.length === 0) {

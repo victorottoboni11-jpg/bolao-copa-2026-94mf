@@ -22,8 +22,12 @@ export function AdminMatchCard({ match, onSaveScore, onFinalizeMatch, onReopenMa
   }, [match.home_score, match.away_score]);
 
   const isFinished = match.is_finished === true || match.status === "finished";
-  const homeTeamName = typeof match.home_team === "string" ? match.home_team : match.home_team?.name ?? "Mandante";
-  const awayTeamName = typeof match.away_team === "string" ? match.away_team : match.away_team?.name ?? "Visitante";
+  const homeTeam = match.home_team && typeof match.home_team !== "string" ? match.home_team : null;
+  const awayTeam = match.away_team && typeof match.away_team !== "string" ? match.away_team : null;
+  const homeTeamName = homeTeam?.name ?? "Mandante";
+  const awayTeamName = awayTeam?.name ?? "Visitante";
+  const homeTeamFlag = homeTeam?.flag_url;
+  const awayTeamFlag = awayTeam?.flag_url;
   const kickoffLabel = formatBrazilTime(match.kickoff_at, "full");
 
   const handleSave = async () => {
@@ -71,7 +75,15 @@ export function AdminMatchCard({ match, onSaveScore, onFinalizeMatch, onReopenMa
         </div>
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <span className="text-lg font-semibold text-white">{homeTeamName}</span>
+          <div className="flex items-center gap-3">
+            {homeTeamFlag ? (
+              <img src={homeTeamFlag} alt={homeTeamName} className="h-10 w-10 rounded-full object-cover" />
+            ) : (
+              <span className="h-10 w-10 rounded-full bg-slate-800" />
+            )}
+            <span className="text-lg font-semibold text-white">{homeTeamName}</span>
+          </div>
+
           <div className="flex items-center gap-2">
             <input
               type="number"
@@ -91,7 +103,15 @@ export function AdminMatchCard({ match, onSaveScore, onFinalizeMatch, onReopenMa
               disabled={isFinished || isProcessing}
             />
           </div>
-          <span className="text-lg font-semibold text-white">{awayTeamName}</span>
+
+          <div className="flex items-center gap-3">
+            {awayTeamFlag ? (
+              <img src={awayTeamFlag} alt={awayTeamName} className="h-10 w-10 rounded-full object-cover" />
+            ) : (
+              <span className="h-10 w-10 rounded-full bg-slate-800" />
+            )}
+            <span className="text-lg font-semibold text-white">{awayTeamName}</span>
+          </div>
         </div>
 
         {kickoffLabel ? <div className="text-xs text-slate-500">Partida: {kickoffLabel}</div> : null}

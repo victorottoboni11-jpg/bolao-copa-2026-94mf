@@ -81,7 +81,16 @@ function normalizeMatch(
     console.warn(`⚠️ Não foi possível encontrar o ID do time visitante: ${match.away_team}`);
   }
 
-  const kickoffUtc = brasiliaToUTC(match.match_date) ?? null;
+  let kickoffUtc: string | null = null;
+
+  if (match.match_date instanceof Date) {
+    kickoffUtc = match.match_date.toISOString();
+  } else if (typeof match.match_date === "string") {
+    const parsed = Date.parse(match.match_date);
+    kickoffUtc = Number.isNaN(parsed) ? brasiliaToUTC(match.match_date) : match.match_date;
+  } else {
+    kickoffUtc = brasiliaToUTC(match.match_date);
+  }
 
   return {
     home_team_id: homeTeamId,

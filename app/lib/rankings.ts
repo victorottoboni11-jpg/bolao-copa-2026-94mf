@@ -1,3 +1,4 @@
+import { type SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 import { calculateMatchPoints } from "./scoring";
 import { isGroupPhase, isKnockoutPhase } from "./phases";
@@ -32,11 +33,12 @@ export async function fetchRanking(): Promise<RankingEntry[]> {
     }));
   }
 
-  return await calculateRankingFromPredictions();
+  return await calculateRankingFromPredictions(supabase);
 }
 
-export async function recalculateRankings(): Promise<RankingEntry[]> {
-  const ranking = await calculateRankingFromPredictions();
+export async function recalculateRankings(db?: SupabaseClient): Promise<RankingEntry[]> {
+  const client = db ?? supabase;
+  const ranking = await calculateRankingFromPredictions(client);
 
   const upsertRows = ranking.map((item) => ({
     user_id: item.user_id,
@@ -49,7 +51,7 @@ export async function recalculateRankings(): Promise<RankingEntry[]> {
     updated_at: new Date().toISOString(),
   }));
 
-  const { error } = await supabase
+  const { error } = await client
     .from("rankings")
     .upsert(upsertRows, { onConflict: "user_id" });
 
@@ -60,11 +62,11 @@ export async function recalculateRankings(): Promise<RankingEntry[]> {
   return ranking;
 }
 
-async function calculateRankingFromPredictions(): Promise<RankingEntry[]> {
+async function calculateRankingFromPredictions(client: SupabaseClient): Promise<RankingEntry[]> {
   const [{ data: predictionsData }, { data: matchesData }, { data: usersData }] = await Promise.all([
-    supabase.from("predictions").select("*"),
-    supabase.from("matches").select("id, home_score, away_score, phase"),
-    supabase.from("users").select("id, full_name, email"),
+    client.from("predictions").select("*"),
+    client.from("matches").select("id, home_score, away_score, phase"),
+    client.from("users").select("id, full_name, email"),
   ]);
 
   const predictions = predictionsData || [];

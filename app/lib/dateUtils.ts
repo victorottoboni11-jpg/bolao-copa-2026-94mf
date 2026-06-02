@@ -6,7 +6,7 @@
  */
 
 const BRAZIL_TIMEZONE = "America/Sao_Paulo";
-const LOCK_MINUTES_BEFORE = 5;
+const LOCK_MINUTES_BEFORE = 30;
 
 /**
  * Parse ISO string to Date object (safe)
@@ -50,7 +50,7 @@ export function formatBrazilTime(
 }
 
 /**
- * Check if match is locked (within 5 minutes of kickoff)
+ * Check if match is locked (within 30 minutes of kickoff)
  * Uses server time (UTC)
  * Returns true if locked, false if can still place bets
  */

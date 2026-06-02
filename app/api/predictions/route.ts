@@ -5,7 +5,7 @@ import { supabase } from "../../lib/supabase";
  * POST /api/predictions
  * Body: { matchId, predictedHome, predictedAway }
  * Requires Authorization: Bearer <access_token>
- * Enforces server-side locking: predictions immutable 5 minutes before kickoff_at
+ * Enforces server-side locking: predictions immutable 30 minutes before kickoff_at
  */
 export async function POST(request: NextRequest) {
   try {
@@ -50,11 +50,11 @@ export async function POST(request: NextRequest) {
     if (kickoff) {
       const kickoffTime = new Date(kickoff).getTime();
       if (!Number.isNaN(kickoffTime)) {
-        const cutoff = kickoffTime - 5 * 60 * 1000; // 5 minutes before kickoff
+        const cutoff = kickoffTime - 30 * 60 * 1000; // 30 minutes before kickoff
         const now = Date.now();
         if (now >= cutoff) {
           return NextResponse.json(
-            { error: "Predictions are locked 5 minutes before kickoff" },
+            { error: "Predictions are locked 30 minutes before kickoff" },
             { status: 403 }
           );
         }

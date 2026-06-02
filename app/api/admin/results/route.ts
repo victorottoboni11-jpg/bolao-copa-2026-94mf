@@ -3,7 +3,9 @@
  * Handles listing matches and finalizing match results
  */
 
-import { supabase } from "../../../lib/supabase";
+import { getServerSupabase } from "../../../lib/serverSupabase";
+import { normalizeMatchPhase } from "../../../lib/phases";
+import { recalculateRankings } from "../../../lib/rankings";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -21,6 +23,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Verify token and admin status
+    const supabase = getServerSupabase();
     const { data: userData } = await supabase.auth.getUser(token);
 
     if (!userData?.user?.id) {
@@ -45,8 +48,8 @@ export async function GET(request: NextRequest) {
     const phaseAliases: Record<string, string[]> = {
       all: [],
       friendly: ["friendly"],
-      group: ["group", "group_stage"],
-      knockout: ["round_of_32", "round_of_16", "quarterfinal", "quarterfinals", "semifinal", "semifinals", "third_place", "final"],
+      group: ["group"],
+      knockout: ["round_of_32", "round_of_16", "quarterfinal", "semifinal", "third_place", "final"],
     };
 
     const statusAliases: Record<string, string[]> = {
@@ -57,7 +60,9 @@ export async function GET(request: NextRequest) {
       finished: ["finished", "complete", "completed"],
     };
 
-    const normalizedPhaseValues = phaseAliases[phase] || [phase];
+    const normalizedPhaseValues = (phaseAliases[phase] || [phase])
+      .map((value) => normalizeMatchPhase(value) ?? value)
+      .filter((value, index, array) => array.indexOf(value) === index);
     const normalizedStatusValues = statusAliases[status] || [status];
 
     // Build query
@@ -141,6 +146,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const supabase = getServerSupabase();
     const { data: userData } = await supabase.auth.getUser(token);
 
     if (!userData?.user?.id) {
@@ -205,7 +211,6 @@ export async function POST(request: NextRequest) {
         status: "finished",
         is_finished: true,
         finished_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
       })
       .eq("id", matchId);
 
@@ -215,6 +220,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    console.log("[admin/results] match updated", { matchId, homeScore, awayScore });
 
     // Recalculate all predictions for this match
     const { data: predictions, error: predError } = await supabase
@@ -231,7 +238,6 @@ export async function POST(request: NextRequest) {
     }
 
     if (predictions && predictions.length > 0) {
-      // Import scoring function
       const { calculateMatchPoints } = await import("../../../lib/scoring");
 
       // Calculate points for each prediction
@@ -251,63 +257,16 @@ export async function POST(request: NextRequest) {
 
       if (updatePredError) {
         console.error("Error updating predictions:", updatePredError);
-      }
-
-      // Recalculate rankings for affected users in a single batched operation
-      const userIds = [...new Set(predictions.map((p) => p.user_id))];
-
-      if (userIds.length > 0) {
-        // Fetch all predictions points for affected users
-        const { data: userPredsData, error: userPredsError } = await supabase
-          .from("predictions")
-          .select("user_id, points")
-          .in("user_id", userIds);
-
-        if (userPredsError) {
-          console.error("Error fetching user predictions for rankings:", userPredsError);
-        }
-
-        // Sum points per user
-        const pointsByUser = new Map<string, number>();
-        (userPredsData || []).forEach((row: any) => {
-          const uid = String(row.user_id);
-          const pts = Number(row.points || 0);
-          pointsByUser.set(uid, (pointsByUser.get(uid) || 0) + pts);
-        });
-
-        // Fetch pre-copa points for affected users in one query
-        const { data: preCopaData } = await supabase
-          .from("pre_copa_predictions")
-          .select("user_id, points")
-          .in("user_id", userIds);
-
-        const preCopaByUser = new Map<string, number>();
-        (preCopaData || []).forEach((row: any) => {
-          preCopaByUser.set(String(row.user_id), Number(row.points || 0));
-        });
-
-        // Build rankings upsert payload
-        const rankingsUpserts = userIds.map((uid) => {
-          const matchPoints = pointsByUser.get(uid) || 0;
-          const preCopaPoints = preCopaByUser.get(uid) || 0;
-          return {
-            user_id: uid,
-            total_points: matchPoints + preCopaPoints,
-            pre_copa_points: preCopaPoints,
-            updated_at: new Date().toISOString(),
-          };
-        });
-
-        // Upsert all rankings in one call to avoid duplicate recalculations
-        const { error: rankingError } = await supabase
-          .from("rankings")
-          .upsert(rankingsUpserts, { onConflict: "user_id" });
-
-        if (rankingError) {
-          console.error("Error upserting rankings:", rankingError);
-        }
+        return NextResponse.json(
+          { error: `Failed to update predictions: ${updatePredError.message}` },
+          { status: 500 }
+        );
       }
     }
+
+    console.log("[admin/results] recalculating full rankings after finalizing match", { matchId });
+    await recalculateRankings(getServerSupabase());
+    console.log("[admin/results] rankings recalculated");
 
     return NextResponse.json({
       success: true,

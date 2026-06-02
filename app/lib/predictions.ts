@@ -88,5 +88,6 @@ export function isPredictionLocked(matchDate?: string | null, isOpen = true) {
     return false;
   }
 
-  return Date.now() >= matchTime;
+  const cutoffTime = matchTime - 30 * 60 * 1000;
+  return Date.now() >= cutoffTime;
 }

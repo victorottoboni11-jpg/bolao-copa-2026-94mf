@@ -40,158 +40,97 @@ export function PreCopaForm({ initialData, onSave, isSaving, disabled = false }:
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 pb-28 sm:pb-0">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="group rounded-[28px] border border-[#00ffb2]/15 bg-[#04070f]/95 p-4 transition hover:border-[#00ffb2]/30">
-          <div className="flex items-center gap-3">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#00ffb2]/10 text-[#00ffb2]">🏆</span>
-            <div>
-              <p className="text-sm font-semibold text-white">Campeão</p>
-              <p className="text-xs text-slate-400">Seleção campeã</p>
-            </div>
-          </div>
+        <label className="block text-sm text-slate-200">
+          Campeão
           <input
             value={championTeam}
             onChange={(event) => setChampionTeam(event.target.value)}
             placeholder="Seleção campeã"
-            disabled={disabled}
-            className="mt-4 w-full rounded-3xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none transition focus:border-[#00ffb2] disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none focus:border-[#00ffb2]"
             required
           />
         </label>
-        <label className="group rounded-[28px] border border-[#00ffb2]/15 bg-[#04070f]/95 p-4 transition hover:border-[#00ffb2]/30">
-          <div className="flex items-center gap-3">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#00ffb2]/10 text-[#00ffb2]">🥈</span>
-            <div>
-              <p className="text-sm font-semibold text-white">Vice-campeão</p>
-              <p className="text-xs text-slate-400">Seleção vice</p>
-            </div>
-          </div>
+        <label className="block text-sm text-slate-200">
+          Vice
           <input
             value={runnerUp}
             onChange={(event) => setRunnerUp(event.target.value)}
             placeholder="Seleção vice"
-            disabled={disabled}
-            className="mt-4 w-full rounded-3xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none transition focus:border-[#00ffb2] disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none focus:border-[#00ffb2]"
             required
           />
         </label>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="group rounded-[28px] border border-[#00ffb2]/15 bg-[#04070f]/95 p-4 transition hover:border-[#00ffb2]/30">
-          <div className="flex items-center gap-3">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#00ffb2]/10 text-[#00ffb2]">⚽</span>
-            <div>
-              <p className="text-sm font-semibold text-white">Artilheiro</p>
-              <p className="text-xs text-slate-400">Jogador artilheiro</p>
-            </div>
-          </div>
+        <label className="block text-sm text-slate-200">
+          Artilheiro
           <input
             value={topScorer}
             onChange={(event) => setTopScorer(event.target.value)}
             placeholder="Jogador artilheiro"
-            disabled={disabled}
-            className="mt-4 w-full rounded-3xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none transition focus:border-[#00ffb2] disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none focus:border-[#00ffb2]"
             required
           />
         </label>
-        <label className="group rounded-[28px] border border-[#00ffb2]/15 bg-[#04070f]/95 p-4 transition hover:border-[#00ffb2]/30">
-          <div className="flex items-center gap-3">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#00ffb2]/10 text-[#00ffb2]">🎯</span>
-            <div>
-              <p className="text-sm font-semibold text-white">Gols do artilheiro</p>
-              <p className="text-xs text-slate-400">Previsão de gols</p>
-            </div>
-          </div>
+        <label className="block text-sm text-slate-200">
+          Gols do artilheiro
           <input
             type="number"
             min={0}
             value={topScorerGoals}
             onChange={(event) => setTopScorerGoals(Number(event.target.value))}
-            disabled={disabled}
-            className="mt-4 w-full rounded-3xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none transition focus:border-[#00ffb2] disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none focus:border-[#00ffb2]"
             required
           />
         </label>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="group rounded-[28px] border border-[#00ffb2]/15 bg-[#04070f]/95 p-4 transition hover:border-[#00ffb2]/30">
-          <div className="flex items-center gap-3">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#00ffb2]/10 text-[#00ffb2]">🧤</span>
-            <div>
-              <p className="text-sm font-semibold text-white">Melhor goleiro</p>
-              <p className="text-xs text-slate-400">Revelação na defesa</p>
-            </div>
-          </div>
+        <label className="block text-sm text-slate-200">
+          Melhor goleiro
           <input
             value={bestGoalkeeper}
             onChange={(event) => setBestGoalkeeper(event.target.value)}
             placeholder="Melhor goleiro"
-            disabled={disabled}
-            className="mt-4 w-full rounded-3xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none transition focus:border-[#00ffb2] disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none focus:border-[#00ffb2]"
             required
           />
         </label>
-        <label className="group rounded-[28px] border border-[#00ffb2]/15 bg-[#04070f]/95 p-4 transition hover:border-[#00ffb2]/30">
-          <div className="flex items-center gap-3">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#00ffb2]/10 text-[#00ffb2]">⭐</span>
-            <div>
-              <p className="text-sm font-semibold text-white">Melhor jogador</p>
-              <p className="text-xs text-slate-400">Destaque do torneio</p>
-            </div>
-          </div>
+        <label className="block text-sm text-slate-200">
+          Melhor jogador
           <input
             value={bestPlayer}
             onChange={(event) => setBestPlayer(event.target.value)}
             placeholder="Melhor jogador"
-            disabled={disabled}
-            className="mt-4 w-full rounded-3xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none transition focus:border-[#00ffb2] disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none focus:border-[#00ffb2]"
             required
           />
         </label>
       </div>
 
-      <label className="group rounded-[28px] border border-[#00ffb2]/15 bg-[#04070f]/95 p-4 transition hover:border-[#00ffb2]/30">
-        <div className="flex items-center gap-3">
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#00ffb2]/10 text-[#00ffb2]">🔥</span>
-          <div>
-            <p className="text-sm font-semibold text-white">Revelação do torneio</p>
-            <p className="text-xs text-slate-400">Jogador surpresa</p>
-          </div>
-        </div>
-        <input
-          value={tournamentRevelation}
-          onChange={(event) => setTournamentRevelation(event.target.value)}
-          placeholder="Revelação do torneio"
-          disabled={disabled}
-          className="mt-4 w-full rounded-3xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none transition focus:border-[#00ffb2] disabled:cursor-not-allowed disabled:opacity-50"
-          required
-        />
-      </label>
-
-      <div className="hidden sm:block">
-        <button
-          type="submit"
-          disabled={isSaving || disabled}
-          className="w-full rounded-3xl bg-gradient-to-r from-[#00ffb2] to-[#00b2ff] px-5 py-4 text-sm font-semibold text-slate-950 transition hover:shadow-xl hover:shadow-[#00ffb2]/30 disabled:opacity-70 disabled:cursor-not-allowed"
-        >
-          {isSaving ? "Salvando..." : disabled ? "Palpites encerrados" : "Salvar Palpite Pré-Copa"}
-        </button>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="block text-sm text-slate-200">
+          Revelação do torneio
+          <input
+            value={tournamentRevelation}
+            onChange={(event) => setTournamentRevelation(event.target.value)}
+            placeholder="Jogador revelação"
+            className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none focus:border-[#00ffb2]"
+            required
+          />
+        </label>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 sm:hidden">
-        <div className="mx-4 flex items-center justify-center rounded-t-[28px] border border-[#00ffb2]/15 bg-[#04070f]/95 px-4 py-4 shadow-[0_-20px_50px_rgba(0,0,0,0.35)] backdrop-blur-xl">
-          <button
-            type="submit"
-            disabled={isSaving || disabled}
-            className="w-full max-w-2xl rounded-3xl bg-gradient-to-r from-[#00ffb2] to-[#00b2ff] px-5 py-4 text-sm font-semibold text-slate-950 transition hover:shadow-xl hover:shadow-[#00ffb2]/30 disabled:opacity-70 disabled:cursor-not-allowed"
-          >
-            {isSaving ? "Salvando..." : disabled ? "Encerrado" : "Salvar agora"}
-          </button>
-        </div>
-      </div>
+      <button
+        type="submit"
+        disabled={isSaving}
+        className="w-full rounded-2xl bg-gradient-to-r from-[#00ffb2] to-[#00b2ff] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:shadow-lg hover:shadow-[#00ffb2]/30 disabled:opacity-70"
+      >
+        {isSaving ? "Salvando..." : "Salvar Palpite Pré-Copa"}
+      </button>
     </form>
   );
 }

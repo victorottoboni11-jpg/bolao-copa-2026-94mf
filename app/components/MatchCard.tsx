@@ -1,178 +1,229 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
-import { formatBrazilTime, getMatchKickoffAt } from "@/app/lib/matchDate";
-import type { Match, Team } from "@/app/types";
+import { useEffect, useState } from "react";
+
+interface Team {
+  id: string;
+  name: string;
+  fifa_code: string;
+  flag_url: string;
+}
+
+interface Match {
+  id: string;
+  phase: string;
+  venue?: string | null;
+  kickoff_at?: string;
+}
 
 interface MatchCardProps {
   match: Match;
-  homeTeam?: Team;
-  awayTeam?: Team;
-  onPrediction?: (homeScore: number, awayScore: number) => void;
+
+  homeTeam?: Team | null;
+  awayTeam?: Team | null;
+
   isEditable?: boolean;
+
   locked?: boolean;
+
   disabled?: boolean;
+
   lockMessage?: string;
+
   predictedHome?: number;
+
   predictedAway?: number;
+
   predictionUpdatedAt?: string;
+
+  onPrediction?: (homeScore: number, awayScore: number) => void;
 }
 
 export function MatchCard({
   match,
   homeTeam,
   awayTeam,
-  onPrediction,
-  isEditable = false,
+  isEditable = true,
   locked = false,
   disabled = false,
   lockMessage,
   predictedHome,
   predictedAway,
-  predictionUpdatedAt,
+  onPrediction,
 }: MatchCardProps) {
-  const [home, setHome] = useState(predictedHome ?? 0);
-  const [away, setAway] = useState(predictedAway ?? 0);
+  const [homeScore, setHomeScore] = useState<number>(
+    predictedHome ?? 0
+  );
 
-  const hasScore = match.home_score !== null && match.away_score !== null && match.home_score !== undefined && match.away_score !== undefined;
+  const [awayScore, setAwayScore] = useState<number>(
+    predictedAway ?? 0
+  );
 
-  const handlePredict = () => {
-    onPrediction?.(home, away);
+  useEffect(() => {
+    setHomeScore(predictedHome ?? 0);
+  }, [predictedHome]);
+
+  useEffect(() => {
+    setAwayScore(predictedAway ?? 0);
+  }, [predictedAway]);
+
+  const formattedDate = match.kickoff_at
+    ? new Date(match.kickoff_at).toLocaleString("pt-BR", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      })
+    : "Data indefinida";
+
+  const handlePrediction = (
+    newHome: number,
+    newAway: number
+  ) => {
+    setHomeScore(newHome);
+    setAwayScore(newAway);
+
+    if (onPrediction) {
+      onPrediction(newHome, newAway);
+    }
   };
 
-  const homeTeamResolved =
-    homeTeam ?? (typeof match.home_team === "object" ? match.home_team : undefined);
-  const awayTeamResolved =
-    awayTeam ?? (typeof match.away_team === "object" ? match.away_team : undefined);
-
-  const homeTeamName =
-    homeTeamResolved?.name ||
-    (typeof match.home_team === "string" ? match.home_team : "Mandante");
-  const awayTeamName =
-    awayTeamResolved?.name ||
-    (typeof match.away_team === "string" ? match.away_team : "Visitante");
-
-  const kickoff = getMatchKickoffAt(match);
-  const formattedDate = formatBrazilTime(kickoff, "full");
-
   return (
-    <div className="bg-gradient-to-br from-[#081116] to-[#070b16] border border-[#00ffb2]/20 rounded-xl overflow-hidden hover:border-[#00ffb2]/50 transition-all duration-300 shadow-lg hover:shadow-[0_0_20px_rgba(0,255,178,0.1)]">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-[#00ffb2]/10 to-[#00b2ff]/10 px-4 py-2 border-b border-[#00ffb2]/10">
-        <div className="flex justify-between items-center">
-          <span className="text-xs font-semibold text-[#00ffb2] uppercase tracking-widest">
-            {match.group_name ? `Grupo ${match.group_name}` : match.phase}
-          </span>
-          <span className="text-xs text-[#00b2ff]/70">{formattedDate}</span>
-        </div>
+    <div className="rounded-2xl border border-[#00ffb233] overflow-hidden bg-[#050816]">
+
+      {/* HEADER */}
+      <div className="flex items-center justify-between px-5 py-4 bg-[#0b2a2f]">
+
+        <span className="text-[#00ffb2] font-bold uppercase tracking-wider text-sm">
+          {match.phase}
+        </span>
+
+        <span className="text-[#35cfff] text-sm">
+          {formattedDate}
+        </span>
+
       </div>
 
-      {/* Match Content */}
-      <div className="p-4">
-        {/* Estádio */}
-        <div className="text-xs text-gray-400 mb-3 text-center">
-          {match.stadium}
+      {/* BODY */}
+      <div className="p-6 space-y-6">
+
+        {/* VENUE */}
+        <div className="text-center text-sm text-gray-400">
+          {match.venue || "Estádio não definido"}
         </div>
 
-        {/* Times */}
-        <div className="grid grid-cols-3 gap-2 items-center mb-4">
-          {/* Home Team */}
-          <div className="flex flex-col items-center">
-            {homeTeamResolved?.flag_url && (
-              <Image
-                src={homeTeamResolved.flag_url}
-                alt={homeTeamName}
-                width={60}
-                height={40}
-                className="rounded mb-1"
-              />
-            )}
-            <span className="text-xs font-semibold text-center text-white">
-              {homeTeamName}
-            </span>
-          </div>
+        {/* TEAMS */}
+        <div className="grid grid-cols-3 items-center gap-4">
 
-          {/* Score or Prediction */}
-          <div className="flex flex-col items-center gap-1">
-            {hasScore ? (
-              <div className="text-lg font-bold text-[#00ffb2]">
-                {match.home_score} - {match.away_score}
-              </div>
-            ) : isEditable ? (
-              <div className="flex gap-1 items-center">
-                <input
-                  type="number"
-                  min="0"
-                  max="9"
-                  value={home}
-                  onChange={(e) => setHome(Number(e.target.value))}
-                  className="w-8 h-8 bg-[#04070f] border border-[#00ffb2]/30 rounded text-center text-white font-bold text-sm"
-                />
-                <span className="text-[#00b2ff]">-</span>
-                <input
-                  type="number"
-                  min="0"
-                  max="9"
-                  value={away}
-                  onChange={(e) => setAway(Number(e.target.value))}
-                  className="w-8 h-8 bg-[#04070f] border border-[#00ffb2]/30 rounded text-center text-white font-bold text-sm"
-                />
-              </div>
-            ) : predictedHome !== undefined && predictedAway !== undefined ? (
-              <div className="text-sm font-semibold text-[#00b2ff]">
-                {predictedHome} - {predictedAway}
-              </div>
+          {/* HOME */}
+          <div className="flex flex-col items-center text-center gap-2">
+
+            {homeTeam?.flag_url ? (
+              <Image
+                src={homeTeam.flag_url}
+                alt={homeTeam.name}
+                width={72}
+                height={48}
+                className="rounded-md object-cover border border-[#00ffb244]"
+              />
             ) : (
-              <div className="text-xs text-gray-500">Sem palpite</div>
+              <div className="w-[72px] h-[48px] rounded-md bg-[#111827]" />
             )}
+
+            <div>
+              <p className="font-bold text-white">
+                {homeTeam?.name || "Mandante"}
+              </p>
+
+              <p className="text-xs text-[#00ffb2]">
+                {homeTeam?.fifa_code || "---"}
+              </p>
+            </div>
+
           </div>
 
-          {/* Away Team */}
-          <div className="flex flex-col items-center">
-            {awayTeamResolved?.flag_url && (
-              <Image
-                src={awayTeamResolved.flag_url}
-                alt={awayTeamName}
-                width={60}
-                height={40}
-                className="rounded mb-1"
-              />
-            )}
-            <span className="text-xs font-semibold text-center text-white">
-              {awayTeamName}
+          {/* SCORE */}
+          <div className="flex items-center justify-center gap-2">
+
+            <input
+              type="number"
+              min={0}
+              value={homeScore}
+              disabled={!isEditable || locked || disabled}
+              onChange={(e) =>
+                handlePrediction(
+                  Number(e.target.value),
+                  awayScore
+                )
+              }
+              className="w-12 h-12 bg-[#081120] border border-[#00ffb244] rounded-lg text-center text-white text-xl font-bold disabled:opacity-50"
+            />
+
+            <span className="text-white text-xl font-bold">
+              x
             </span>
+
+            <input
+              type="number"
+              min={0}
+              value={awayScore}
+              disabled={!isEditable || locked || disabled}
+              onChange={(e) =>
+                handlePrediction(
+                  homeScore,
+                  Number(e.target.value)
+                )
+              }
+              className="w-12 h-12 bg-[#081120] border border-[#00ffb244] rounded-lg text-center text-white text-xl font-bold disabled:opacity-50"
+            />
+
           </div>
+
+          {/* AWAY */}
+          <div className="flex flex-col items-center text-center gap-2">
+
+            {awayTeam?.flag_url ? (
+              <Image
+                src={awayTeam.flag_url}
+                alt={awayTeam.name}
+                width={72}
+                height={48}
+                className="rounded-md object-cover border border-[#00ffb244]"
+              />
+            ) : (
+              <div className="w-[72px] h-[48px] rounded-md bg-[#111827]" />
+            )}
+
+            <div>
+              <p className="font-bold text-white">
+                {awayTeam?.name || "Visitante"}
+              </p>
+
+              <p className="text-xs text-[#00ffb2]">
+                {awayTeam?.fifa_code || "---"}
+              </p>
+            </div>
+
+          </div>
+
         </div>
 
-        {/* Action Button */}
+        {/* LOCK MESSAGE */}
         {locked && lockMessage && (
-          <div className="rounded-lg border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-center text-xs text-amber-200">
+          <div className="text-center text-sm text-red-400 font-semibold">
             {lockMessage}
           </div>
         )}
 
-        {isEditable && onPrediction && !hasScore && (
+        {/* BUTTON */}
+        {isEditable && !locked && (
           <button
-            onClick={handlePredict}
             disabled={disabled}
-            className="w-full py-2 bg-gradient-to-r from-[#00ffb2] to-[#00b2ff] text-black font-semibold rounded-lg hover:shadow-lg hover:shadow-[#00ffb2]/30 transition-all duration-300 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full py-4 rounded-xl bg-gradient-to-r from-[#00ffb2] to-[#24cfff] text-black font-bold text-lg hover:opacity-90 transition disabled:opacity-50"
           >
-            {disabled ? "Salvando..." : "Confirmar Palpite"}
+            Confirmar Palpite
           </button>
         )}
 
-        {predictionUpdatedAt && !hasScore && (
-          <div className="mt-2 text-[11px] text-slate-400 text-center">
-            Atualizado em {new Date(predictionUpdatedAt).toLocaleString("pt-BR")}
-          </div>
-        )}
-
-        {hasScore && (
-          <div className="text-xs text-center text-[#00ffb2]/70 py-2">
-            ✓ Resultado Finalizado
-          </div>
-        )}
       </div>
     </div>
   );

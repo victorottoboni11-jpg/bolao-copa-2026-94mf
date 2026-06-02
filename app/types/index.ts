@@ -14,39 +14,76 @@ export type Team = {
   created_at?: string;
 };
 
-import type { MatchPhase as MatchPhaseType } from "../lib/phases";
+export type Phase =
+  | "friendly"
+  | "group"
+  | "round_of_32"
+  | "round_of_16"
+  | "quarterfinal"
+  | "semifinal"
+  | "third_place"
+  | "final"
+  | "pre-copa";
 
-export type Phase = MatchPhaseType | "pre-copa";
-
-export type MatchPhase = MatchPhaseType;
+export type MatchPhase =
+  | "friendly"
+  | "group"
+  | "round_of_32"
+  | "round_of_16"
+  | "quarterfinal"
+  | "semifinal"
+  | "third_place"
+  | "final";
 
 export type Match = {
   id: string;
+
+  phase: MatchPhase;
+
+  phase_order?: number;
+
+  match_number?: number;
+
   home_team_id?: string | null;
   away_team_id?: string | null;
+
   home_team?: Team | string | null;
   away_team?: Team | string | null;
+
   home_team_info?: Team | null;
   away_team_info?: Team | null;
+
+  kickoff_at?: string;
+
+  venue?: string | null;
+
+  stadium?: string | null;
+
+  city?: string | null;
+
+  group_name?: string | null;
+
+  match_date?: string;
+
+  match_datetime?: string;
+
   home_score?: number | null;
   away_score?: number | null;
-  match_number?: number;
-  phase: MatchPhase;
-  phase_order?: number | null;
-  group_name?: string | null;
-  stadium?: string | null;
-  city?: string | null;
-  country?: string | null;
-  match_date?: string;
-  match_datetime?: string;
-  kickoff_at?: string | null;
+
   status?: "pending" | "live" | "finished" | "scheduled" | string;
+
   is_finished?: boolean;
+
   winner?: "home" | "away" | "draw" | null;
+
   winner_type?: "normal" | "penalties" | null;
+
   round?: number | null;
+
   result_updated?: boolean;
+
   created_at?: string;
+
   updated_at?: string;
 };
 
@@ -105,11 +142,14 @@ export type PreCopaResult = {
   id: string;
   champion_team: string;
   runner_up_team: string;
+  golden_ball_player: string;
   top_scorer_player: string;
   top_scorer_goals: number;
   best_goalkeeper_player: string;
-  best_player: string;
-  tournament_revelation: string;
+  most_assists_player: string;
+  most_assists_count: number;
+  fair_play_team: string;
+  revelation_player: string;
   created_at?: string;
 };
 
@@ -117,7 +157,7 @@ export type RankingEntry = {
   rank: number;
   user_id: string;
   user_name: string;
-  user_email?: string | null;
+  user_email: string | null;
   user_avatar?: string | null;
   total_points: number;
   pre_copa_points: number;
@@ -129,6 +169,7 @@ export type RankingEntry = {
 
 export type GroupStandings = {
   group_name: string;
+
   teams: Array<{
     team_id: string;
     team_name: string;

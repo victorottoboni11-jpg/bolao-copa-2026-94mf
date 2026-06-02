@@ -3,7 +3,8 @@
  * Reopens a finished match for editing
  */
 
-import { supabase } from "../../../../lib/supabase";
+import { getServerSupabase } from "../../../../lib/serverSupabase";
+import { recalculateRankings } from "../../../../lib/rankings";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -20,6 +21,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const supabase = getServerSupabase();
     const { data: userData } = await supabase.auth.getUser(token);
 
     if (!userData?.user?.id) {
@@ -54,7 +56,6 @@ export async function POST(request: NextRequest) {
         status: "pending",
         is_finished: false,
         finished_at: null,
-        updated_at: new Date().toISOString(),
       })
       .eq("id", matchId);
 
@@ -90,38 +91,10 @@ export async function POST(request: NextRequest) {
         console.error("Error clearing prediction points:", updatePredError);
       }
 
-      // Recalculate rankings for affected users
-      const userIds = [...new Set(predictions.map((p) => p.user_id))];
-
-      for (const userId of userIds) {
-        const { data: userPreds } = await supabase
-          .from("predictions")
-          .select("points")
-          .eq("user_id", userId);
-
-        const matchPoints = userPreds?.reduce((sum, p) => sum + (p.points || 0), 0) || 0;
-
-        const { data: preCopaData } = await supabase
-          .from("pre_copa_predictions")
-          .select("points")
-          .eq("user_id", userId)
-          .single();
-
-        const preCopaPoints = preCopaData?.points || 0;
-        const totalPoints = matchPoints + preCopaPoints;
-
-        await supabase
-          .from("rankings")
-          .upsert(
-            {
-              user_id: userId,
-              total_points: totalPoints,
-              pre_copa_points: preCopaPoints,
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: "user_id" }
-          );
-      }
+      console.log("[admin/results/reopen] predictions reset for match", { matchId, affected: predictions.length });
+      console.log("[admin/results/reopen] recalculating full rankings after reopening match", { matchId });
+      await recalculateRankings(getServerSupabase());
+      console.log("[admin/results/reopen] rankings recalculated");
     }
 
     return NextResponse.json({

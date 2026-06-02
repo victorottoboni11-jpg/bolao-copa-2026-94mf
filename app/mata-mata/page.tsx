@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/app/lib/auth";
-import { getAllMatches } from "@/app/lib/importCopa2026";
+import { supabase } from "@/app/lib/supabase";
 import { getPredictionsForMatches, savePrediction, isPredictionLocked } from "@/app/lib/predictions";
-import { getMataMataPredictionState } from "@/app/lib/matches";
-import { getMatchKickoffAt, compareKickoffTimes, isMatchLocked } from "@/app/lib/matchDate";
-import { isKnockoutPhase, KNOCKOUT_PHASE_ORDER, formatPhaseLabel } from "@/app/lib/phases";
+import { getPredictionsOpenSetting } from "@/app/lib/matches";
+import { getMatchKickoffAt, compareKickoffTimes } from "@/app/lib/matchDate";
+import { KNOCKOUT_PHASE_ORDER, formatPhaseLabel } from "@/app/lib/phases";
 import { MatchCard } from "@/app/components/MatchCard";
 import { Toast } from "@/app/components/Toast";
 import type { Match, Prediction } from "@/app/types";
@@ -28,15 +28,45 @@ export default function MataMataPage() {
     const loadData = async () => {
       setLoadingData(true);
       try {
-        const [matchList, predictionState] = await Promise.all([
-          getAllMatches(),
-          getMataMataPredictionState(),
+        const [supabaseMatches, predictionsOpen] = await Promise.all([
+          supabase
+            .from("matches")
+            .select(`
+              *,
+              home_team_info:teams!matches_home_team_id_fkey(*),
+              away_team_info:teams!matches_away_team_id_fkey(*)
+            `)
+            .order("kickoff_at", { ascending: true }),
+          getPredictionsOpenSetting(),
         ]);
 
-        const knockoutMatches = matchList.filter((match) => isKnockoutPhase(match.phase));
+        const { data, error } = supabaseMatches;
+        if (error) throw error;
+
+        console.log("MATA-MATA MATCHES TEAM INFO:", (data || []).map((match) => ({
+          id: match.id,
+          home_team_info: match.home_team_info,
+          away_team_info: match.away_team_info,
+        })));
+
+        const knockoutMatches = (data || []).filter((match) =>
+          ["round_of_32", "round_of_16", "quarterfinal", "semifinal", "third_place", "final"].includes(match.phase)
+        );
+        console.log("MATCHES FROM SUPABASE:", data);
+        console.log("MATCH COUNTS", {
+          total: data?.length ?? 0,
+          group: (data || []).filter((match) => match.phase === "group").length,
+          knockout: knockoutMatches.length,
+          friendlies: (data || []).filter((match) => match.phase === "friendly").length,
+        });
+
         setMatches(knockoutMatches);
-        setPredictionsOpen(predictionState.isOpen);
-        setGroupStageFinished(predictionState.groupStageFinished);
+        setPredictionsOpen(predictionsOpen);
+        setGroupStageFinished(
+          (data || [])
+            .filter((match) => match.phase === "group")
+            .every((match) => match.is_finished === true)
+        );
 
         const predictionMap = await getPredictionsForMatches(user.id, knockoutMatches.map((match) => match.id));
         setPredictions(predictionMap);

@@ -32,7 +32,7 @@ function clearAuthCookie() {
 async function fetchProfile(userId: string) {
   const { data, error } = await supabase
     .from("users")
-    .select("id, full_name, email, is_admin, created_at")
+    .select("id, full_name, email, is_admin")
     .eq("id", userId)
     .maybeSingle();
 

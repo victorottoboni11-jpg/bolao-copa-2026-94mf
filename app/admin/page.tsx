@@ -37,7 +37,7 @@ export default function AdminPage() {
       setLoadingData(true);
       try {
         const [adminMatches, open] = await Promise.all([
-          fetchAdminMatches(phaseFilter, statusFilter),
+          fetchAdminMatches(),
           getPredictionsOpenSetting(),
         ]);
         setMatches(adminMatches);
@@ -61,7 +61,7 @@ export default function AdminPage() {
   const refreshMatches = async () => {
     setLoadingData(true);
     try {
-      const adminMatches = await fetchAdminMatches(phaseFilter, statusFilter);
+      const adminMatches = await fetchAdminMatches();
       setMatches(adminMatches);
     } catch (error) {
       console.error(error);

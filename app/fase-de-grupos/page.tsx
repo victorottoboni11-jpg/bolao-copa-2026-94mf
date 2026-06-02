@@ -3,11 +3,10 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/app/lib/auth";
-import { getAllMatches } from "@/app/lib/importCopa2026";
+import { supabase } from "@/app/lib/supabase";
 import { getPredictionsForMatches, savePrediction, isPredictionLocked } from "@/app/lib/predictions";
 import { getPredictionsOpenSetting } from "@/app/lib/matches";
-import { getMatchKickoffAt, compareKickoffTimes, isMatchLocked } from "@/app/lib/matchDate";
-import { isGroupPhase } from "@/app/lib/phases";
+import { getMatchKickoffAt, compareKickoffTimes } from "@/app/lib/matchDate";
 import { MatchCard } from "@/app/components/MatchCard";
 import { Toast } from "@/app/components/Toast";
 import type { Match, Prediction } from "@/app/types";
@@ -27,12 +26,36 @@ export default function FaseDeGruposPage() {
     const loadData = async () => {
       setLoadingData(true);
       try {
-        const [matchList, open] = await Promise.all([
-          getAllMatches(),
+        const [supabaseMatches, open] = await Promise.all([
+          supabase
+            .from("matches")
+            .select(`
+              *,
+              home_team_info:teams!matches_home_team_id_fkey(*),
+              away_team_info:teams!matches_away_team_id_fkey(*)
+            `)
+            .order("kickoff_at", { ascending: true }),
           getPredictionsOpenSetting(),
         ]);
 
-        const groupMatches = matchList.filter((match) => isGroupPhase(match.phase));
+        const { data, error } = supabaseMatches;
+        if (error) throw error;
+
+        console.log("GROUPS MATCHES TEAM INFO:", (data || []).map((match) => ({
+          id: match.id,
+          home_team_info: match.home_team_info,
+          away_team_info: match.away_team_info,
+        })));
+
+        const groupMatches = (data || []).filter((match) => match.phase === "group");
+        console.log("MATCHES FROM SUPABASE:", data);
+        console.log("MATCH COUNTS", {
+          total: data?.length ?? 0,
+          group: groupMatches.length,
+          knockout: (data || []).filter((match) => ["round_of_32", "round_of_16", "quarterfinal", "semifinal", "third_place", "final"].includes(match.phase)).length,
+          friendlies: (data || []).filter((match) => match.phase === "friendly").length,
+        });
+
         setMatches(groupMatches);
         setPredictionsOpen(open);
 

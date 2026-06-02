@@ -11,6 +11,17 @@ export const MATCH_PHASES = [
 
 export type MatchPhase = (typeof MATCH_PHASES)[number];
 
+const LEGACY_PHASE_ALIASES: Record<string, MatchPhase> = {
+  groups: "group",
+  group_stage: "group",
+  round_of_16: "round_of_16",
+  quarterfinals: "quarterfinal",
+  semifinals: "semifinal",
+  round_of_32: "round_of_32",
+  third_place: "third_place",
+  final: "final",
+};
+
 export const MATCH_PHASE_LABELS: Record<MatchPhase, string> = {
   friendly: "Amistoso",
   group: "Fase de Grupos",
@@ -42,31 +53,38 @@ export const KNOCKOUT_PHASE_ORDER: MatchPhase[] = [
   "final",
 ];
 
-export function isGroupPhase(phase: string | undefined): phase is MatchPhase {
-  return phase !== undefined && GROUP_PHASES.has(phase as MatchPhase);
+export function normalizeMatchPhase(phase: string | undefined): MatchPhase | null {
+  if (!phase) return null;
+
+  const normalized = String(phase).trim().toLowerCase().replace(/[-\s]+/g, "_");
+  return LEGACY_PHASE_ALIASES[normalized] ?? (MATCH_PHASES.includes(normalized as MatchPhase) ? (normalized as MatchPhase) : null);
 }
 
-export function isKnockoutPhase(phase: string | undefined): phase is MatchPhase {
-  return phase !== undefined && KNOCKOUT_PHASES.has(phase as MatchPhase);
+export function isGroupPhase(phase: string | undefined): boolean {
+  return normalizeMatchPhase(phase) === "group";
+}
+
+export function isKnockoutPhase(phase: string | undefined): boolean {
+  const normalized = normalizeMatchPhase(phase);
+  return normalized !== null && KNOCKOUT_PHASES.has(normalized);
 }
 
 export function formatPhaseLabel(phase: string | undefined): string {
-  if (!phase) {
+  const normalized = normalizeMatchPhase(phase);
+
+  if (!normalized) {
     return "Fase desconhecida";
   }
 
-  if (phase in MATCH_PHASE_LABELS) {
-    return MATCH_PHASE_LABELS[phase as MatchPhase];
-  }
-
-  return String(phase).replace(/_/g, " ");
+  return MATCH_PHASE_LABELS[normalized];
 }
 
 export function getPhaseOrder(phase?: string): number | null {
-  if (!phase) {
+  const normalized = normalizeMatchPhase(phase);
+  if (!normalized) {
     return null;
   }
 
-  const index = MATCH_PHASES.indexOf(phase as MatchPhase);
+  const index = MATCH_PHASES.indexOf(normalized);
   return index === -1 ? null : index;
 }
