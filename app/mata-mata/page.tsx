@@ -198,8 +198,21 @@ export default function MataMataPage() {
                         lockMessage={locked ? "Palpites encerrados" : undefined}
                         predictedHome={prediction?.predicted_home}
                         predictedAway={prediction?.predicted_away}
+                        predictedWinner={(prediction as any)?.predicted_winner}
+                        predictedPenalties={(prediction as any)?.predicted_penalties}
+                        predictedMethod={(prediction as any)?.predicted_method}
                         predictionUpdatedAt={prediction?.updated_at}
-                        onPrediction={(homeScore, awayScore) => void handleSavePrediction(match.id, homeScore, awayScore)}
+                        onPrediction={(homeScore, awayScore, winner, penalties, method) => {
+                          setPendingScores((prev) => ({ ...prev, [match.id]: { home: homeScore, away: awayScore, winner, penalties, method } }));
+                        }}
+                        onConfirm={() => {
+                          const p = pendingScores[match.id];
+                          if (p) {
+                            void handleSavePrediction(match.id, p.home, p.away, p.winner, p.penalties, p.method);
+                          } else if (prediction) {
+                            void handleSavePrediction(match.id, prediction.predicted_home, prediction.predicted_away);
+                          }
+                        }}
                       />
                     );
                   })}
