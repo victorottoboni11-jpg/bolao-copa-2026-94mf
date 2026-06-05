@@ -210,7 +210,6 @@ export async function POST(request: NextRequest) {
         away_score: awayScore,
         status: "finished",
         is_finished: true,
-        finished_at: new Date().toISOString(),
       })
       .eq("id", matchId);
 
