@@ -17,32 +17,43 @@ export const SCORING_RULES = {
   },
 
   GROUPS: {
-    EXACT_SCORE: 5,
-    CORRECT_RESULT: 3,
+    EXACT_SCORE: 5,       // Cravada: placar exato + resultado
+    CORRECT_RESULT: 3,    // Acerto simples: só resultado
     WRONG: 0,
   },
 
+  // Mata-mata conforme PDF:
+  // Cravada (class + placar + resultado) = 8 pts
+  // Classificado + resultado (tipo: normal/pen) = 5 pts
+  // Só classificado = 4 pts
+  // Placar + resultado (sem class) = 4 pts
+  // Só resultado = 1 pt
+  // Erro total = 0 pts
   KNOCKOUT: {
-    EXACT_WINNER_SCORE: 8,
-    SCORE_RESULT: 4,
-    ONLY_WINNER: 4,
-    ONLY_RESULT: 1,
+    EXACT_ALL: 8,           // class + placar + resultado corretos
+    WINNER_RESULT: 5,       // class correto + resultado (normal/pen) correto, placar errado
+    ONLY_WINNER: 4,         // só class correto
+    SCORE_RESULT: 4,        // placar + resultado corretos, class errado
+    ONLY_RESULT: 1,         // só resultado (normal/pen) correto
     WRONG: 0,
   },
 };
 
 export function calculateGroupStagePoints(prediction: Prediction, match: Match): number {
-  if (match.home_score === undefined || match.home_score === null || match.away_score === undefined || match.away_score === null) {
+  if (match.home_score === undefined || match.home_score === null ||
+      match.away_score === undefined || match.away_score === null) {
     return 0;
   }
 
   const { predicted_home, predicted_away } = prediction;
   const { home_score, away_score } = match;
 
+  // Cravada: placar exato
   if (predicted_home === home_score && predicted_away === away_score) {
     return SCORING_RULES.GROUPS.EXACT_SCORE;
   }
 
+  // Acerto simples: só resultado (V/E/D)
   const actualResult = home_score > away_score ? "home" : away_score > home_score ? "away" : "draw";
   const predictedResult = predicted_home > predicted_away ? "home" : predicted_away > predicted_home ? "away" : "draw";
 
@@ -54,30 +65,55 @@ export function calculateGroupStagePoints(prediction: Prediction, match: Match):
 }
 
 export function calculateKnockoutPoints(prediction: Prediction, match: Match): number {
-  if (match.home_score === undefined || match.home_score === null || match.away_score === undefined || match.away_score === null) {
+  if (match.home_score === undefined || match.home_score === null ||
+      match.away_score === undefined || match.away_score === null) {
     return 0;
   }
 
-  const { predicted_home, predicted_away } = prediction;
+  const { predicted_home, predicted_away, predicted_winner, predicted_penalties } = prediction;
   const { home_score, away_score } = match;
-  const exactScore = predicted_home === home_score && predicted_away === away_score;
 
-  if (exactScore) {
-    return SCORING_RULES.KNOCKOUT.EXACT_WINNER_SCORE;
+  // Classificado real: quem ganhou no tempo normal ou nos pênaltis
+  const actualWinner = match.winner ?? (
+    home_score > away_score ? "home" :
+    away_score > home_score ? "away" : null
+  );
+  // Se empate no tempo normal, classificado é definido por winner_type + winner do match
+  const actualViaPenalties = match.winner_type === "penalties";
+
+  // O que o usuário previu
+  const predictedWinnerSide = predicted_winner ?? (
+    predicted_home > predicted_away ? "home" :
+    predicted_away > predicted_home ? "away" : null
+  );
+  const predictedViaPenalties = predicted_penalties ?? false;
+
+  const exactScore = predicted_home === home_score && predicted_away === away_score;
+  const correctWinner = actualWinner !== null && predictedWinnerSide === actualWinner;
+  const correctResult = actualViaPenalties === predictedViaPenalties; // acertou se foi normal ou pênaltis
+
+  // Cravada: class + placar + resultado (normal/pen)
+  if (correctWinner && exactScore && correctResult) {
+    return SCORING_RULES.KNOCKOUT.EXACT_ALL;
   }
 
-  const actualWinner = home_score > away_score ? "home" : away_score > home_score ? "away" : "draw";
-  const predictedWinner = predicted_home > predicted_away ? "home" : predicted_away > predicted_home ? "away" : "draw";
-  const oneSideCorrect = predicted_home === home_score || predicted_away === away_score;
+  // Classificado + resultado corretos (placar errado)
+  if (correctWinner && correctResult && !exactScore) {
+    return SCORING_RULES.KNOCKOUT.WINNER_RESULT;
+  }
 
-  if (actualWinner === predictedWinner && actualWinner !== "draw") {
-    if (oneSideCorrect) {
-      return SCORING_RULES.KNOCKOUT.SCORE_RESULT;
-    }
+  // Só classificado (resultado errado, placar errado)
+  if (correctWinner && !correctResult) {
     return SCORING_RULES.KNOCKOUT.ONLY_WINNER;
   }
 
-  if (oneSideCorrect) {
+  // Placar + resultado corretos (class errado)
+  if (!correctWinner && exactScore && correctResult) {
+    return SCORING_RULES.KNOCKOUT.SCORE_RESULT;
+  }
+
+  // Só resultado (normal/pen) correto
+  if (!correctWinner && !exactScore && correctResult) {
     return SCORING_RULES.KNOCKOUT.ONLY_RESULT;
   }
 
@@ -88,16 +124,14 @@ function isGroupPhaseMatch(phase?: string, groupName?: string | null) {
   return isGroupPhase(phase) || typeof groupName === "string";
 }
 
-function isKnockoutPhaseMatch(phase?: string) {
-  return isKnockoutPhase(phase);
-}
-
 export function calculateMatchPoints(prediction: Prediction, match: Match) {
-  if (match.home_score === undefined || match.home_score === null || match.away_score === undefined || match.away_score === null) {
+  if (match.home_score === undefined || match.home_score === null ||
+      match.away_score === undefined || match.away_score === null) {
     return { points: 0, exact: false };
   }
 
-  const exact = prediction.predicted_home === match.home_score && prediction.predicted_away === match.away_score;
+  const exact = prediction.predicted_home === match.home_score &&
+                prediction.predicted_away === match.away_score;
 
   return {
     points: isGroupPhaseMatch(match.phase, match.group_name)
@@ -119,7 +153,6 @@ export function calculatePreCopaPoints(
   revelationMatches: boolean
 ): number {
   let points = 0;
-
   if (championMatches) points += SCORING_RULES.PRE_COPA.CHAMPION;
   if (runnerUpMatches) points += SCORING_RULES.PRE_COPA.RUNNER_UP;
   if (topScorerMatches) points += SCORING_RULES.PRE_COPA.TOP_SCORER_EXACT;
@@ -129,7 +162,6 @@ export function calculatePreCopaPoints(
   if (mostAssistsMatches) points += SCORING_RULES.PRE_COPA.MOST_ASSISTS;
   if (fairPlayMatches) points += SCORING_RULES.PRE_COPA.FAIR_PLAY;
   if (revelationMatches) points += SCORING_RULES.PRE_COPA.REVELATION;
-
   return points;
 }
 
@@ -141,10 +173,9 @@ export function calculateUserPhasePoints(
   return predictions.reduce((total, prediction) => {
     const match = matches.find((m) => m.id === prediction.match_id);
     if (!match) return total;
-
-    const points =
-      phase === "group" ? calculateGroupStagePoints(prediction, match) : calculateKnockoutPoints(prediction, match);
-
+    const points = phase === "group"
+      ? calculateGroupStagePoints(prediction, match)
+      : calculateKnockoutPoints(prediction, match);
     return total + points;
   }, 0);
 }
@@ -152,8 +183,8 @@ export function calculateUserPhasePoints(
 export function calculateExactScores(predictions: Prediction[], matches: Match[]): number {
   return predictions.filter((prediction) => {
     const match = matches.find((m) => m.id === prediction.match_id);
-    if (!match || match.home_score === undefined || match.home_score === null || match.away_score === undefined || match.away_score === null) return false;
-
+    if (!match || match.home_score === undefined || match.home_score === null ||
+        match.away_score === undefined || match.away_score === null) return false;
     return prediction.predicted_home === match.home_score && prediction.predicted_away === match.away_score;
   }).length;
 }
@@ -161,16 +192,10 @@ export function calculateExactScores(predictions: Prediction[], matches: Match[]
 export function calculateCorrectResults(predictions: Prediction[], matches: Match[]): number {
   return predictions.filter((prediction) => {
     const match = matches.find((m) => m.id === prediction.match_id);
-    if (!match || match.home_score === undefined || match.home_score === null || match.away_score === undefined || match.away_score === null) return false;
-
+    if (!match || match.home_score === undefined || match.home_score === null ||
+        match.away_score === undefined || match.away_score === null) return false;
     const actualResult = match.home_score > match.away_score ? "home" : match.away_score > match.home_score ? "away" : "draw";
-    const predictedResult =
-      prediction.predicted_home > prediction.predicted_away
-        ? "home"
-        : prediction.predicted_away > prediction.predicted_home
-          ? "away"
-          : "draw";
-
+    const predictedResult = prediction.predicted_home > prediction.predicted_away ? "home" : prediction.predicted_away > prediction.predicted_home ? "away" : "draw";
     return actualResult === predictedResult;
   }).length;
 }
