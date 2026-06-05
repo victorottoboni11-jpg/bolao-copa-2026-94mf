@@ -73,6 +73,7 @@ export type Prediction = {
   predicted_away: number;
   predicted_winner?: string | null;      // "home" | "away" — classificado no mata-mata
   predicted_penalties?: boolean | null;   // true = classificação por pênaltis
+  predicted_method?: "normal" | "extra_time" | "penalties" | null; // método de classificação
   points: number;
   is_locked?: boolean;
   created_at?: string;
