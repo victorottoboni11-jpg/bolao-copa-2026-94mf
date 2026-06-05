@@ -204,33 +204,25 @@ export function MatchCard({
               </button>
             </div>
 
-            {/* Pênaltis — só aparece se o placar for empate */}
+            {/* Método — só aparece se o placar for empate */}
             {homeScore === awayScore && (
               <div className="space-y-2">
                 <p className="text-xs text-gray-400 text-center">Como se classificou?</p>
-                <div className="flex gap-3 justify-center">
-                  <button
-                    disabled={isDisabled}
-                    onClick={() => handlePenalties(false)}
-                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition border ${
-                      !penalties
-                        ? "bg-[#24cfff] text-black border-[#24cfff]"
-                        : "bg-transparent text-white border-[#00ffb244] hover:border-[#24cfff]"
-                    } disabled:opacity-50`}
-                  >
-                    Tempo Normal
-                  </button>
-                  <button
-                    disabled={isDisabled}
-                    onClick={() => handlePenalties(true)}
-                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition border ${
-                      penalties
-                        ? "bg-[#24cfff] text-black border-[#24cfff]"
-                        : "bg-transparent text-white border-[#00ffb244] hover:border-[#24cfff]"
-                    } disabled:opacity-50`}
-                  >
-                    Pênaltis
-                  </button>
+                <div className="flex gap-2 justify-center">
+                  {(["normal", "extra_time", "penalties"] as const).map((m) => (
+                    <button
+                      key={m}
+                      disabled={isDisabled}
+                      onClick={() => handleMethod(m)}
+                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition border ${
+                        method === m
+                          ? "bg-[#24cfff] text-black border-[#24cfff]"
+                          : "bg-transparent text-white border-[#00ffb244] hover:border-[#24cfff]"
+                      } disabled:opacity-50`}
+                    >
+                      {m === "normal" ? "Normal" : m === "extra_time" ? "Prorrogação" : "Pênaltis"}
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
