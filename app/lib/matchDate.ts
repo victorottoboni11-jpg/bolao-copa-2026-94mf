@@ -34,7 +34,7 @@ export {
 export function formatMatchDate(
   kickoffAt?: string | null,
   locale = "pt-BR",
-  timeZone = "America/Sao_Paulo"
+  timeZone = "UTC"
 ): string {
   return formatBrazilTime(kickoffAt, "full");
 }
@@ -46,7 +46,7 @@ export function formatMatchDate(
 export function formatMatchTime(
   kickoffAt?: string | null,
   locale = "pt-BR",
-  timeZone = "America/Sao_Paulo"
+  timeZone = "UTC"
 ): string {
   return formatBrazilTime(kickoffAt, "time");
 }
