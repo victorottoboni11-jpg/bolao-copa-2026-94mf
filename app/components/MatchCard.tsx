@@ -34,6 +34,7 @@ interface MatchCardProps {
   predictedMethod?: "normal" | "extra_time" | "penalties" | null;
   predictionUpdatedAt?: string;
   onPrediction?: (homeScore: number, awayScore: number, winner?: string, penalties?: boolean, method?: "normal" | "extra_time" | "penalties") => void;
+  onConfirm?: () => void;
 }
 
 const KNOCKOUT_PHASES = ["round_of_32", "round_of_16", "quarterfinal", "semifinal", "third_place", "final"];
@@ -52,6 +53,7 @@ export function MatchCard({
   predictedPenalties,
   predictedMethod,
   onPrediction,
+  onConfirm,
 }: MatchCardProps) {
   const [homeScore, setHomeScore] = useState<number>(predictedHome ?? 0);
   const [awayScore, setAwayScore] = useState<number>(predictedAway ?? 0);
@@ -241,9 +243,10 @@ export function MatchCard({
         {isEditable && !locked && (
           <button
             disabled={disabled}
+            onClick={onConfirm}
             className="w-full py-4 rounded-xl bg-gradient-to-r from-[#00ffb2] to-[#24cfff] text-black font-bold text-lg hover:opacity-90 transition disabled:opacity-50"
           >
-            Confirmar Palpite
+            {disabled ? "Salvando..." : "Confirmar Palpite"}
           </button>
         )}
 
