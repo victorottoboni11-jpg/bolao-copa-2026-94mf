@@ -47,7 +47,7 @@ export default function FaseDeGruposPage() {
           away_team_info: match.away_team_info,
         })));
 
-        const groupMatches = (data || []).filter((match) => match.phase === "group");
+        const groupMatches = (data || []).filter((match) => match.phase === "group_stage");
         console.log("MATCHES FROM SUPABASE:", data);
         console.log("MATCH COUNTS", {
           total: data?.length ?? 0,
