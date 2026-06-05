@@ -175,7 +175,7 @@ export function calculateUserPhasePoints(
   return predictions.reduce((total, prediction) => {
     const match = matches.find((m) => m.id === prediction.match_id);
     if (!match) return total;
-    const points = phase === "group"
+    const points = phase === "group" || phase === "group_stage"
       ? calculateGroupStagePoints(prediction, match)
       : calculateKnockoutPoints(prediction, match);
     return total + points;
