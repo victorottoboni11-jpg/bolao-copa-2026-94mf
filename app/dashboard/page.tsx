@@ -150,6 +150,10 @@ export default function DashboardPage() {
             <h2 className="text-xl font-bold mb-2 text-[#00ffb2]">Mata-Mata</h2>
             <p className="text-gray-400">Faça seus palpites eliminatórios.</p>
           </Link>
+          <Link href="/chaveamento" className="rounded-2xl border border-[#00ffb233] bg-[#050816] p-6 hover:border-[#00ffb2]">
+            <h2 className="text-xl font-bold mb-2 text-[#00ffb2]">Chaveamento</h2>
+            <p className="text-gray-400">Veja a chave completa do mata-mata.</p>
+          </Link>
           <Link href="/pre-copa" className="rounded-2xl border border-[#00ffb233] bg-[#050816] p-6 hover:border-[#00ffb2]">
             <h2 className="text-xl font-bold mb-2 text-[#00ffb2]">Pré-Copa</h2>
             <p className="text-gray-400">Palpites especiais do torneio.</p>
