@@ -34,7 +34,7 @@ interface MatchCardProps {
   onPrediction?: (homeScore: number, awayScore: number, winner?: string, penalties?: boolean) => void;
 }
 
-const KNOCKOUT_PHASES = ["round_of_32", "round_of_16", "quarterfinal", "semifinal", "third_place", "final"];
+const KNOCKOUT_PHASES = ["friendly", "round_of_32", "round_of_16", "quarterfinal", "semifinal", "third_place", "final"]; // friendly incluído temporariamente para testes
 
 export function MatchCard({
   match,
