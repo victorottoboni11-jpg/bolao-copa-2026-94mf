@@ -16,7 +16,7 @@ export async function fetchRanking(): Promise<RankingEntry[]> {
       )
     `)
     .order("total_points", { ascending: false })
-    .order("exact_hits", { ascending: false });
+    .order("exact_scores", { ascending: false });
 
   if (!error && data && data.length > 0) {
     return (data as any).map((item: any, index: number) => ({
@@ -25,10 +25,10 @@ export async function fetchRanking(): Promise<RankingEntry[]> {
       user_name: item.user?.full_name || item.user?.email || "Participante",
       user_email: item.user?.email || null,
       total_points: item.total_points ?? 0,
-      pre_copa_points: item.pre_copa_points ?? 0,
-      group_stage_points: item.group_stage_points ?? 0,
-      knockout_points: item.knockout_points ?? 0,
-      exact_scores: item.exact_hits ?? 0,
+      pre_copa_points: 0,
+      group_stage_points: 0,
+      knockout_points: 0,
+      exact_scores: item.exact_scores ?? 0,
       created_at: item.updated_at,
     }));
   }
@@ -40,14 +40,13 @@ export async function recalculateRankings(db?: SupabaseClient): Promise<RankingE
   const client = db ?? supabase;
   const ranking = await calculateRankingFromPredictions(client);
 
-  const upsertRows = ranking.map((item) => ({
+  const upsertRows = ranking.map((item, index) => ({
     user_id: item.user_id,
     total_points: item.total_points,
-    exact_hits: item.exact_scores,
-    winner_hits: item.group_stage_points + item.knockout_points,
-    group_stage_points: item.group_stage_points,
-    knockout_points: item.knockout_points,
-    pre_copa_points: item.pre_copa_points,
+    exact_scores: item.exact_scores,
+    correct_results: item.group_stage_points + item.knockout_points,
+    position: index + 1,
+    matches_played: 0,
     updated_at: new Date().toISOString(),
   }));
 
