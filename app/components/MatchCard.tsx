@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { formatBrazilTime } from "@/app/lib/dateUtils";
+import { formatPhaseLabel } from "@/app/lib/phases";
 
 interface Team {
   id: string;
@@ -95,7 +96,7 @@ export function MatchCard({
       {/* HEADER */}
       <div className="flex items-center justify-between px-5 py-4 bg-[#0b2a2f]">
         <span className="text-[#00ffb2] font-bold uppercase tracking-wider text-sm">
-          {match.phase}
+          {formatPhaseLabel(match.phase)}
         </span>
         <span className="text-[#35cfff] text-sm">
           {formattedDate}
