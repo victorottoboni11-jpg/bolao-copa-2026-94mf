@@ -90,7 +90,7 @@ export default function AdminPage() {
     }
   };
 
-  const handleSaveScore = async (matchId: string, homeScore: number, awayScore: number) => {
+  const handleSaveScore = async (matchId: string, homeScore: number, awayScore: number, winner?: string, penalties?: boolean) => {
     setProcessing(true);
     try {
       const success = await updateMatchScore(matchId, homeScore, awayScore);
@@ -113,10 +113,10 @@ export default function AdminPage() {
     }
   };
 
-  const handleFinalizeMatch = async (matchId: string, homeScore: number, awayScore: number) => {
+  const handleFinalizeMatch = async (matchId: string, homeScore: number, awayScore: number, winner?: string, penalties?: boolean) => {
     setProcessing(true);
     try {
-      const result = await finalizeMatchResult(matchId, homeScore, awayScore);
+      const result = await finalizeMatchResult(matchId, homeScore, awayScore, winner, penalties);
       if (!result?.success) {
         showToast("error", result?.error || "Não foi possível finalizar a partida.");
         return;
@@ -328,3 +328,4 @@ export default function AdminPage() {
     </main>
   );
 }
+
