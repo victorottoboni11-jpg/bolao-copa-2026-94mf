@@ -121,7 +121,9 @@ export function calculateKnockoutPoints(prediction: Prediction, match: Match): n
 }
 
 function isGroupPhaseMatch(phase?: string, groupName?: string | null) {
-  return isGroupPhase(phase) || typeof groupName === "string";
+  // Usar apenas a fase para determinar o tipo de pontuação
+  // group_name não deve ser critério pois partidas do mata-mata também têm group_name nulo
+  return isGroupPhase(phase);
 }
 
 export function calculateMatchPoints(prediction: Prediction, match: Match) {
