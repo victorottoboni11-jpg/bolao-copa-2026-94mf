@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
 
     const serverSupabase = getServerSupabase();
 
-    // Verificar lock da pré-copa
+    // Verificar lock da Pré-Copa
     const lockDate = await fetchPreCopaLockDate();
     if (!canEditPreCopaPrediction(lockDate)) {
       return NextResponse.json(
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error("Erro ao salvar palpite Pré-Copa no servidor:", error);
+      console.error("Erro ao salvar palpite Pré-Copa:", error);
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
