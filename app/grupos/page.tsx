@@ -29,7 +29,7 @@ export default function GruposPage() {
               home_team_info:teams!matches_home_team_id_fkey(*),
               away_team_info:teams!matches_away_team_id_fkey(*)
             `)
-            .eq("phase", "group")
+            .eq("phase", "group_stage")
             .eq("group_name", selectedGroup)
             .order("kickoff_at", { ascending: true }),
           supabase
@@ -49,7 +49,7 @@ export default function GruposPage() {
         })));
         console.log("MATCH COUNTS", {
           total: matchesResponse.data?.length ?? 0,
-          group: matchesResponse.data?.filter((match) => match.phase === "group").length ?? 0,
+          group: matchesResponse.data?.filter((match) => match.phase === "group_stage").length ?? 0,
           knockout: matchesResponse.data?.filter((match) => ["round_of_32", "round_of_16", "quarterfinal", "semifinal", "third_place", "final"].includes(match.phase)).length ?? 0,
           friendlies: matchesResponse.data?.filter((match) => match.phase === "friendly").length ?? 0,
         });
