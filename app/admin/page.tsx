@@ -185,7 +185,7 @@ export default function AdminPage() {
         setToast({ type: "error", text: `Erros: ${errors.join(", ")}` });
       } else {
         setToast({ type: "success", text: `Chaveamento gerado! ${updated} jogos atualizados.` });
-        await loadMatches();
+        await refreshMatches();
       }
     } catch (err) {
       setToast({ type: "error", text: "Erro ao gerar chaveamento" });
@@ -215,7 +215,7 @@ export default function AdminPage() {
         setToast({ type: "error", text: `Erros: ${errors.join(", ")}` });
       } else {
         setToast({ type: "success", text: `Chaveamento gerado! ${updated} jogos atualizados.` });
-        await loadMatches();
+        await refreshMatches();
       }
     } catch (err) {
       setToast({ type: "error", text: "Erro ao gerar chaveamento" });
@@ -247,7 +247,7 @@ export default function AdminPage() {
         setToast({ type: "error", text: `Erros: ${errors.join(", ")}` });
       } else {
         setToast({ type: "success", text: `Chaveamento gerado! ${updated} jogos atualizados.` });
-        await loadMatches();
+        await refreshMatches();
       }
     } catch (err) {
       setToast({ type: "error", text: "Erro ao gerar chaveamento" });
