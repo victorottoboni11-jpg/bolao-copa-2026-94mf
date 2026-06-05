@@ -3,9 +3,7 @@ import { supabase } from "../../lib/supabase";
 
 /**
  * POST /api/predictions
- * Body: { matchId, predictedHome, predictedAway }
- * Requires Authorization: Bearer <access_token>
- * Enforces server-side locking: predictions immutable 30 minutes before kickoff_at
+ * Body: { matchId, predictedHome, predictedAway, predictedWinner?, predictedPenalties? }
  */
 export async function POST(request: NextRequest) {
   try {
@@ -22,7 +20,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { matchId, predictedHome, predictedAway } = body || {};
+    const { matchId, predictedHome, predictedAway, predictedWinner, predictedPenalties } = body || {};
 
     if (!matchId || predictedHome === undefined || predictedAway === undefined) {
       return NextResponse.json(
@@ -35,10 +33,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Predictions must be numbers" }, { status: 400 });
     }
 
-    // Fetch match kickoff_at from DB
+    // Fetch match kickoff_at and phase from DB
     const { data: match, error: matchError } = await supabase
       .from("matches")
-      .select("id, kickoff_at")
+      .select("id, kickoff_at, phase")
       .eq("id", matchId)
       .single();
 
@@ -50,9 +48,8 @@ export async function POST(request: NextRequest) {
     if (kickoff) {
       const kickoffTime = new Date(kickoff).getTime();
       if (!Number.isNaN(kickoffTime)) {
-        const cutoff = kickoffTime - 30 * 60 * 1000; // 30 minutes before kickoff
-        const now = Date.now();
-        if (now >= cutoff) {
+        const cutoff = kickoffTime - 30 * 60 * 1000;
+        if (Date.now() >= cutoff) {
           return NextResponse.json(
             { error: "Predictions are locked 30 minutes before kickoff" },
             { status: 403 }
@@ -61,14 +58,22 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Upsert prediction (use authenticated user id to avoid spoofing)
-    const upsertRow = {
+    const KNOCKOUT_PHASES = ["round_of_32", "round_of_16", "quarterfinal", "semifinal", "third_place", "final"];
+    const isKnockout = KNOCKOUT_PHASES.includes(match.phase);
+
+    const upsertRow: Record<string, unknown> = {
       user_id: userData.user.id,
       match_id: matchId,
       predicted_home: predictedHome,
       predicted_away: predictedAway,
       updated_at: new Date().toISOString(),
     };
+
+    // Salvar classificado e pênaltis apenas no mata-mata
+    if (isKnockout) {
+      upsertRow.predicted_winner = predictedWinner ?? null;
+      upsertRow.predicted_penalties = predictedPenalties ?? false;
+    }
 
     const { data, error } = await supabase
       .from("predictions")
