@@ -27,13 +27,13 @@ export async function fetchAdminMatches(): Promise<AdminMatch[]> {
       .from("matches")
       .select(`
         *,
-        home_team:teams!matches_home_team_id_fkey (
+        home_team:home_team_id (
           id,
           name,
           flag_url,
           fifa_code
         ),
-        away_team:teams!matches_away_team_id_fkey (
+        away_team:away_team_id (
           id,
           name,
           flag_url,
