@@ -1,11 +1,9 @@
 /**
  * Timezone-safe date utilities for Copa 2026 app
  * All database kickoff_at values are UTC timestamps
- * Display should show Brazil time (UTC-3)
- * Filtering should use UTC consistently
+ * Display shows the UTC time as-is (no timezone conversion)
  */
 
-const BRAZIL_TIMEZONE = "America/Sao_Paulo";
 const LOCK_MINUTES_BEFORE = 30;
 
 /**
@@ -20,9 +18,9 @@ export function parseKickoffAt(kickoffAt?: string | null): Date | null {
 }
 
 /**
- * Format UTC timestamp for display in Brazil time
+ * Format UTC timestamp for display
  * Input: UTC ISO string from Supabase
- * Output: Human-readable string in Brazil timezone
+ * Output: Human-readable string showing the UTC time exactly as stored
  */
 export function formatBrazilTime(
   kickoffAt?: string | null,
@@ -32,7 +30,7 @@ export function formatBrazilTime(
   if (!date) return style === "time" ? "--:--" : "Data indefinida";
 
   const opts: Intl.DateTimeFormatOptions = {
-    timeZone: BRAZIL_TIMEZONE,
+    timeZone: "UTC",
   };
 
   if (style === "full" || style === "date") {
