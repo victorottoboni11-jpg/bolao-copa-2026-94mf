@@ -67,8 +67,10 @@ export async function updateMatchScore(
     .from("matches")
     .update(updatePayload)
     .eq("id", matchId)
-    .select("id, home_score, away_score")
-    .single();
+    .select("id, home_score, away_score");
+
+  console.log("UPDATE RESULT", data);
+  console.log("UPDATE ERROR", error);
 
   if (error) {
     let profileInfo = null;
@@ -141,37 +143,45 @@ export async function finalizeMatch(matchId: string): Promise<boolean> {
 }
 
 export async function getPredictionsOpenSetting(): Promise<boolean> {
-  const { data, error } = await supabase
-    .from("admin_settings")
-    .select("predictions_open")
-    .limit(1)
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from("admin_settings")
+      .select("predictions_locked")
+      .limit(1)
+      .single();
 
-  if (error) {
-    console.warn("Erro ao buscar configuração de palpites:", error);
+    if (error) {
+      // Tabela indisponível — palpites abertos por padrão
+      console.warn("admin_settings indisponível, assumindo palpites abertos:", error.message);
+      return true;
+    }
+
+    // predictions_locked = true  → palpites FECHADOS → retorna false
+    // predictions_locked = false → palpites ABERTOS  → retorna true
+    return !(data?.predictions_locked ?? false);
+  } catch {
     return true;
   }
-
-  return data?.predictions_open ?? true;
 }
 
 export async function setPredictionsOpenSetting(isOpen: boolean): Promise<boolean> {
-  const { data, error } = await supabase
-    .from("admin_settings")
-    .upsert({
-      id: "00000000-0000-0000-0000-000000000001",
-      predictions_open: isOpen,
-      updated_at: new Date().toISOString(),
-    }, {
-      onConflict: "id",
-    })
-    .select("*")
-    .single();
+  try {
+    const { error } = await supabase
+      .from("admin_settings")
+      .update({
+        // isOpen = true  → predictions_locked = false
+        // isOpen = false → predictions_locked = true
+        predictions_locked: !isOpen,
+      })
+      .eq("id", 1);
 
-  if (error) {
-    console.error("Erro ao atualizar status de palpites:", error);
+    if (error) {
+      console.error("Erro ao atualizar status de palpites:", error.message);
+      return false;
+    }
+
+    return true;
+  } catch {
     return false;
   }
-
-  return true;
 }
