@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     const phaseAliases: Record<string, string[]> = {
       all: [],
       friendly: ["friendly"],
-      group: ["group"],
+      group: ["group_stage"],
       knockout: ["round_of_32", "round_of_16", "quarterfinal", "semifinal", "third_place", "final"],
     };
 
@@ -61,7 +61,6 @@ export async function GET(request: NextRequest) {
     };
 
     const normalizedPhaseValues = (phaseAliases[phase] || [phase])
-      .map((value) => normalizeMatchPhase(value) ?? value)
       .filter((value, index, array) => array.indexOf(value) === index);
     const normalizedStatusValues = statusAliases[status] || [status];
 
