@@ -144,11 +144,11 @@ export async function finalizeMatch(matchId: string): Promise<boolean> {
 
 export async function getPredictionsOpenSetting(): Promise<boolean> {
   try {
-    const { data, error } = await supabase
+    const { data: rows, error } = await supabase
       .from("admin_settings")
       .select("predictions_locked")
-      .limit(1)
-      .single();
+      .limit(1);
+    const data = rows?.[0] ?? null;
 
     if (error) {
       // Tabela indisponível — palpites abertos por padrão
@@ -185,3 +185,4 @@ export async function setPredictionsOpenSetting(isOpen: boolean): Promise<boolea
     return false;
   }
 }
+
