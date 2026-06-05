@@ -31,8 +31,9 @@ interface MatchCardProps {
   predictedAway?: number;
   predictedWinner?: string | null;
   predictedPenalties?: boolean | null;
+  predictedMethod?: "normal" | "extra_time" | "penalties" | null;
   predictionUpdatedAt?: string;
-  onPrediction?: (homeScore: number, awayScore: number, winner?: string, penalties?: boolean) => void;
+  onPrediction?: (homeScore: number, awayScore: number, winner?: string, penalties?: boolean, method?: "normal" | "extra_time" | "penalties") => void;
 }
 
 const KNOCKOUT_PHASES = ["round_of_32", "round_of_16", "quarterfinal", "semifinal", "third_place", "final"];
@@ -49,12 +50,17 @@ export function MatchCard({
   predictedAway,
   predictedWinner,
   predictedPenalties,
+  predictedMethod,
   onPrediction,
 }: MatchCardProps) {
   const [homeScore, setHomeScore] = useState<number>(predictedHome ?? 0);
   const [awayScore, setAwayScore] = useState<number>(predictedAway ?? 0);
   const [winner, setWinner] = useState<string | null>(predictedWinner ?? null);
   const [penalties, setPenalties] = useState<boolean>(predictedPenalties ?? false);
+  const [method, setMethod] = useState<"normal" | "extra_time" | "penalties">(
+    predictedMethod === "extra_time" ? "extra_time" :
+    predictedMethod === "penalties" ? "penalties" : "normal"
+  );
 
   const isKnockout = KNOCKOUT_PHASES.includes(match.phase);
 
@@ -62,14 +68,20 @@ export function MatchCard({
   useEffect(() => { setAwayScore(predictedAway ?? 0); }, [predictedAway]);
   useEffect(() => { setWinner(predictedWinner ?? null); }, [predictedWinner]);
   useEffect(() => { setPenalties(predictedPenalties ?? false); }, [predictedPenalties]);
+  useEffect(() => {
+    setMethod(
+      predictedMethod === "extra_time" ? "extra_time" :
+      predictedMethod === "penalties" ? "penalties" : "normal"
+    );
+  }, [predictedMethod]);
 
   const formattedDate = formatBrazilTime(match.kickoff_at, "full");
 
-  const handlePrediction = (newHome: number, newAway: number, newWinner?: string, newPenalties?: boolean) => {
+  const handlePrediction = (newHome: number, newAway: number, newWinner?: string, newPenalties?: boolean, newMethod?: "normal" | "extra_time" | "penalties") => {
     setHomeScore(newHome);
     setAwayScore(newAway);
     if (onPrediction) {
-      onPrediction(newHome, newAway, newWinner ?? winner ?? undefined, newPenalties ?? penalties);
+      onPrediction(newHome, newAway, newWinner ?? winner ?? undefined, newPenalties ?? penalties, newMethod ?? method);
     }
   };
 
@@ -77,14 +89,15 @@ export function MatchCard({
     const newWinner = winner === side ? null : side;
     setWinner(newWinner);
     if (onPrediction) {
-      onPrediction(homeScore, awayScore, newWinner ?? undefined, penalties);
+      onPrediction(homeScore, awayScore, newWinner ?? undefined, method === "penalties", method);
     }
   };
 
-  const handlePenalties = (val: boolean) => {
-    setPenalties(val);
+  const handleMethod = (val: "normal" | "extra_time" | "penalties") => {
+    setMethod(val);
+    setPenalties(val === "penalties");
     if (onPrediction) {
-      onPrediction(homeScore, awayScore, winner ?? undefined, val);
+      onPrediction(homeScore, awayScore, winner ?? undefined, val === "penalties", val);
     }
   };
 
