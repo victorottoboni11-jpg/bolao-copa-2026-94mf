@@ -55,7 +55,6 @@ export async function POST(request: NextRequest) {
       .update({
         status: "pending",
         is_finished: false,
-        finished_at: null,
       })
       .eq("id", matchId);
 
