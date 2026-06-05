@@ -7,7 +7,7 @@ export async function getPreCopaPrediction(userId: string): Promise<PreCopaPredi
     .from("pre_copa_predictions")
     .select("*")
     .eq("user_id", userId)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error("Erro ao buscar palpite pré-copa:", error);
