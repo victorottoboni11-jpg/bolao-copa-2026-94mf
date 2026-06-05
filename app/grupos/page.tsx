@@ -26,8 +26,8 @@ export default function GruposPage() {
             .from("matches")
             .select(`
               *,
-              home_team_info:teams!matches_home_team_id_fkey(*),
-              away_team_info:teams!matches_away_team_id_fkey(*)
+              home_team_info:home_team_id (id, name, fifa_code, flag_url),
+              away_team_info:away_team_id (id, name, fifa_code, flag_url)
             `)
             .eq("phase", "group_stage")
             .eq("group_name", selectedGroup)
