@@ -33,8 +33,8 @@ export default function MataMataPage() {
             .from("matches")
             .select(`
               *,
-              home_team_info:teams!matches_home_team_id_fkey(*),
-              away_team_info:teams!matches_away_team_id_fkey(*)
+              home_team_info:home_team_id (id, name, fifa_code, flag_url),
+              away_team_info:away_team_id (id, name, fifa_code, flag_url)
             `)
             .order("kickoff_at", { ascending: true }),
           getPredictionsOpenSetting(),
@@ -55,7 +55,7 @@ export default function MataMataPage() {
         console.log("MATCHES FROM SUPABASE:", data);
         console.log("MATCH COUNTS", {
           total: data?.length ?? 0,
-          group: (data || []).filter((match) => match.phase === "group").length,
+          group: (data || []).filter((match) => match.phase === "group_stage").length,
           knockout: knockoutMatches.length,
           friendlies: (data || []).filter((match) => match.phase === "friendly").length,
         });
@@ -64,7 +64,7 @@ export default function MataMataPage() {
         setPredictionsOpen(predictionsOpen);
         setGroupStageFinished(
           (data || [])
-            .filter((match) => match.phase === "group")
+            .filter((match) => match.phase === "group_stage")
             .every((match) => match.is_finished === true)
         );
 
