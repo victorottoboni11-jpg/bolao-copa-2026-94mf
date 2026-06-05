@@ -20,6 +20,7 @@ export default function MataMataPage() {
   const [groupStageFinished, setGroupStageFinished] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [savingMatchId, setSavingMatchId] = useState<string | null>(null);
+  const [pendingScores, setPendingScores] = useState<Record<string, { home: number; away: number; winner?: string; penalties?: boolean; method?: string }>>({});
   const [toast, setToast] = useState<{ type: "success" | "error" | "info"; message: string } | null>(null);
 
   useEffect(() => {
@@ -80,12 +81,12 @@ export default function MataMataPage() {
     loadData();
   }, [user]);
 
-  const handleSavePrediction = async (matchId: string, homeScore: number, awayScore: number) => {
+  const handleSavePrediction = async (matchId: string, homeScore: number, awayScore: number, winner?: string, penalties?: boolean, method?: string) => {
     if (!user) return;
     setSavingMatchId(matchId);
 
     try {
-      const saved = await savePrediction(user.id, matchId, homeScore, awayScore);
+      const saved = await savePrediction(user.id, matchId, homeScore, awayScore, winner ?? null, penalties ?? false);
       if (!saved) {
         setToast({ type: "error", message: "Erro ao salvar palpite" });
         return;
