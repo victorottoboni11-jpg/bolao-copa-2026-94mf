@@ -42,10 +42,12 @@ export async function savePrediction(
   userId: string,
   matchId: string,
   predictedHome: number,
-  predictedAway: number
+  predictedAway: number,
+  predictedWinner?: string | null,
+  predictedPenalties?: boolean | null
 ): Promise<Prediction | null> {
   try {
-    // Use server API so locking is enforced server-side (5 minutes before kickoff)
+    // Use server API so locking is enforced server-side (30 minutes before kickoff)
     const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
     if (sessionError || !sessionData?.session?.access_token) {
       throw new Error("Session not available");
@@ -57,7 +59,7 @@ export async function savePrediction(
         Authorization: `Bearer ${sessionData.session.access_token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ matchId, predictedHome, predictedAway }),
+      body: JSON.stringify({ matchId, predictedHome, predictedAway, predictedWinner, predictedPenalties }),
     });
 
     if (!res.ok) {
