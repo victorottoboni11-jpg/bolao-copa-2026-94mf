@@ -58,7 +58,7 @@ export type Match = {
   status?: "pending" | "live" | "finished" | "scheduled" | string;
   is_finished?: boolean;
   winner?: "home" | "away" | "draw" | null;
-  winner_type?: "normal" | "penalties" | null;
+  winner_type?: "normal" | "extra_time" | "penalties" | null;
   round?: number | null;
   result_updated?: boolean;
   created_at?: string;
