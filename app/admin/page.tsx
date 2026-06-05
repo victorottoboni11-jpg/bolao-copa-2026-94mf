@@ -11,6 +11,8 @@ import { Toast } from "@/app/components/Toast";
 import { getPredictionsOpenSetting, setPredictionsOpenSetting, updateMatchScore } from "@/app/lib/matches";
 import { fetchAdminMatches, finalizeMatchResult, reopenMatchResult, type AdminMatch } from "@/app/lib/admin";
 import { recalculateRankings } from "@/app/lib/rankings";
+import { updateKnockoutBracket } from "@/app/lib/bracket";
+import { supabase } from "@/app/lib/supabase";
 
 export default function AdminPage() {
   const { user, loading } = useAuth();
@@ -22,6 +24,7 @@ export default function AdminPage() {
   const [processing, setProcessing] = useState(false);
   const [predictionsOpen, setPredictionsOpen] = useState(true);
   const [toast, setToast] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
+  const [generatingBracket, setGeneratingBracket] = useState(false);
 
   const finishedCount = useMemo(
     () => matches.filter((item) => item.is_finished || item.status === "finished").length,
@@ -173,7 +176,26 @@ export default function AdminPage() {
   };
 
   if (loading || !user) {
-    return (
+    const handleGenerateBracket = async () => {
+    setGeneratingBracket(true);
+    try {
+      const { getServerSupabase } = await import("@/app/lib/serverSupabase").catch(() => ({ getServerSupabase: null }));
+      const { updated, errors } = await updateKnockoutBracket(supabase);
+      if (errors.length > 0) {
+        setToast({ type: "error", text: `Erros: ${errors.join(", ")}` });
+      } else {
+        setToast({ type: "success", text: `Chaveamento gerado! ${updated} jogos atualizados.` });
+        await loadMatches();
+      }
+    } catch (err) {
+      setToast({ type: "error", text: "Erro ao gerar chaveamento" });
+    } finally {
+      setGeneratingBracket(false);
+      window.setTimeout(() => setToast(null), 4000);
+    }
+  };
+
+  return (
       <div className="min-h-screen flex items-center justify-center bg-[#04070f] px-4 py-8 text-white">
         <div className="text-center space-y-4">
           <div className="w-14 h-14 rounded-full border-4 border-[#00ffb2]/30 border-t-[#00ffb2] animate-spin mx-auto"></div>
@@ -184,7 +206,26 @@ export default function AdminPage() {
   }
 
   if (!isAdmin) {
-    return (
+    const handleGenerateBracket = async () => {
+    setGeneratingBracket(true);
+    try {
+      const { getServerSupabase } = await import("@/app/lib/serverSupabase").catch(() => ({ getServerSupabase: null }));
+      const { updated, errors } = await updateKnockoutBracket(supabase);
+      if (errors.length > 0) {
+        setToast({ type: "error", text: `Erros: ${errors.join(", ")}` });
+      } else {
+        setToast({ type: "success", text: `Chaveamento gerado! ${updated} jogos atualizados.` });
+        await loadMatches();
+      }
+    } catch (err) {
+      setToast({ type: "error", text: "Erro ao gerar chaveamento" });
+    } finally {
+      setGeneratingBracket(false);
+      window.setTimeout(() => setToast(null), 4000);
+    }
+  };
+
+  return (
       <main className="min-h-screen bg-[#04070f] px-4 py-8 text-white">
         <div className="mx-auto max-w-3xl rounded-3xl border border-[#00ffb2]/20 bg-slate-950/90 p-10 text-center">
           <h1 className="text-2xl font-bold">Acesso Negado</h1>
@@ -196,6 +237,25 @@ export default function AdminPage() {
       </main>
     );
   }
+
+  const handleGenerateBracket = async () => {
+    setGeneratingBracket(true);
+    try {
+      const { getServerSupabase } = await import("@/app/lib/serverSupabase").catch(() => ({ getServerSupabase: null }));
+      const { updated, errors } = await updateKnockoutBracket(supabase);
+      if (errors.length > 0) {
+        setToast({ type: "error", text: `Erros: ${errors.join(", ")}` });
+      } else {
+        setToast({ type: "success", text: `Chaveamento gerado! ${updated} jogos atualizados.` });
+        await loadMatches();
+      }
+    } catch (err) {
+      setToast({ type: "error", text: "Erro ao gerar chaveamento" });
+    } finally {
+      setGeneratingBracket(false);
+      window.setTimeout(() => setToast(null), 4000);
+    }
+  };
 
   return (
     <main className="min-h-full bg-[radial-gradient(circle_at_top,_rgba(0,255,178,0.14),_transparent_28%),_linear-gradient(180deg,#04070f_0%,#070b16_100%)] px-4 py-8 text-white">
@@ -243,6 +303,14 @@ export default function AdminPage() {
                     className="rounded-2xl border border-[#00ffb2]/20 bg-[#04070f] px-4 py-3 text-sm text-[#00ffb2] hover:bg-[#0b1a25] disabled:opacity-50"
                   >
                     Recalcular ranking
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleGenerateBracket}
+                    disabled={generatingBracket || processing}
+                    className="rounded-2xl border border-[#00b2ff]/40 bg-[#04070f] px-4 py-3 text-sm text-[#00b2ff] hover:bg-[#0b1a25] disabled:opacity-50"
+                  >
+                    {generatingBracket ? "Gerando..." : "⚽ Gerar Chaveamento"}
                   </button>
                 </div>
               </div>
