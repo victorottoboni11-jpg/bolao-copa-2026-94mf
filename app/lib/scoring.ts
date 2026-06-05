@@ -123,7 +123,8 @@ export function calculateKnockoutPoints(prediction: Prediction, match: Match): n
 function isGroupPhaseMatch(phase?: string, groupName?: string | null) {
   // Amistosos e fase de grupos usam pontuação de grupos (max 5 pts)
   // Mata-mata usa pontuação de eliminatórias (max 8 pts)
-  if (phase === "friendly") return true;
+  // TEMPORARIO: friendly conta como mata-mata para teste
+  // if (phase === "friendly") return true;
   return isGroupPhase(phase);
 }
 
