@@ -1,6 +1,7 @@
 export const MATCH_PHASES = [
   "friendly",
   "group",
+  "group_stage",
   "round_of_32",
   "round_of_16",
   "quarterfinal",
@@ -25,6 +26,7 @@ const LEGACY_PHASE_ALIASES: Record<string, MatchPhase> = {
 export const MATCH_PHASE_LABELS: Record<MatchPhase, string> = {
   friendly: "Amistoso",
   group: "Fase de Grupos",
+  group_stage: "Fase de Grupos",
   round_of_32: "32 avos",
   round_of_16: "Oitavas",
   quarterfinal: "Quartas de Final",
@@ -33,7 +35,7 @@ export const MATCH_PHASE_LABELS: Record<MatchPhase, string> = {
   final: "Final",
 };
 
-export const GROUP_PHASES: ReadonlySet<MatchPhase> = new Set(["group"]);
+export const GROUP_PHASES: ReadonlySet<MatchPhase> = new Set(["group", "group_stage"]);
 
 export const KNOCKOUT_PHASES: ReadonlySet<MatchPhase> = new Set([
   "round_of_32",
@@ -61,7 +63,8 @@ export function normalizeMatchPhase(phase: string | undefined): MatchPhase | nul
 }
 
 export function isGroupPhase(phase: string | undefined): boolean {
-  return normalizeMatchPhase(phase) === "group";
+  const n = normalizeMatchPhase(phase);
+  return n === "group" || n === "group_stage" || phase === "group_stage";
 }
 
 export function isKnockoutPhase(phase: string | undefined): boolean {
