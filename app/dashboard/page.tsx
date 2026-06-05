@@ -11,6 +11,11 @@ import { formatBrazilTime } from "@/app/lib/dateUtils";
 
 import type { Match, Prediction } from "@/app/types";
 
+function getUtcDay(kickoffAt: string): number {
+  const d = new Date(kickoffAt);
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+}
+
 function getUpcomingMatches(matches: Match[]): Match[] {
   const nowUtc = Date.now();
 
@@ -24,28 +29,20 @@ function getUpcomingMatches(matches: Match[]): Match[] {
 
   if (upcoming.length === 0) return [];
 
-  // Data do primeiro jogo futuro (em UTC, só a parte da data)
-  const firstDate = new Date(upcoming[0].kickoff_at!);
-  const firstDay = Date.UTC(firstDate.getUTCFullYear(), firstDate.getUTCMonth(), firstDate.getUTCDate());
-
-  // Próximo dia após o primeiro
-  const nextDay = firstDay + 86400000;
-
-  // Pega os 8 primeiros + todos do dia seguinte ao último dos 8
+  // Pega os primeiros 8 jogos
   const first8 = upcoming.slice(0, 8);
 
   if (upcoming.length <= 8) return first8;
 
-  // Data do 8º jogo
-  const eighth = new Date(first8[first8.length - 1].kickoff_at!);
-  const eighthDay = Date.UTC(eighth.getUTCFullYear(), eighth.getUTCMonth(), eighth.getUTCDate());
-  const dayAfterEighth = eighthDay + 86400000;
+  // Dia UTC do último jogo nos primeiros 8
+  const lastOf8Day = getUtcDay(first8[first8.length - 1].kickoff_at!);
 
-  // Todos os jogos do dia seguinte ao 8º
+  // Dia seguinte ao último dos 8
+  const nextDay = lastOf8Day + 86400000;
+
+  // Todos os jogos do dia seguinte (mesmo que sejam muitos)
   const nextDayMatches = upcoming.slice(8).filter((m) => {
-    const d = new Date(m.kickoff_at!);
-    const day = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
-    return day === dayAfterEighth;
+    return getUtcDay(m.kickoff_at!) === nextDay;
   });
 
   return [...first8, ...nextDayMatches];
