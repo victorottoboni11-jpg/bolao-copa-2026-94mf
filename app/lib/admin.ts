@@ -70,11 +70,11 @@ export async function fetchAdminMatches(): Promise<AdminMatch[]> {
   }
 }
 
-export async function finalizeMatchResult(matchId: string, homeScore: number, awayScore: number) {
+export async function finalizeMatchResult(matchId: string, homeScore: number, awayScore: number, winner?: string, penalties?: boolean) {
   const response = await fetch("/api/admin/results", {
     method: "POST",
     headers: await getAdminHeaders(),
-    body: JSON.stringify({ matchId, homeScore, awayScore }),
+    body: JSON.stringify({ matchId, homeScore, awayScore, winner, penalties }),
   });
 
   if (!response.ok) {
@@ -99,3 +99,4 @@ export async function reopenMatchResult(matchId: string) {
 
   return response.json();
 }
+
