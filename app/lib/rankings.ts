@@ -50,6 +50,9 @@ export async function recalculateRankings(db?: SupabaseClient): Promise<RankingE
     updated_at: new Date().toISOString(),
   }));
 
+  // Log para debug
+  console.log("[recalculateRankings] top 5:", upsertRows.slice(0, 5).map(r => ({ user: r.user_id.slice(0,8), pts: r.total_points })));
+
   const { error } = await client
     .from("rankings")
     .upsert(upsertRows, { onConflict: "user_id" });
@@ -62,10 +65,11 @@ export async function recalculateRankings(db?: SupabaseClient): Promise<RankingE
 }
 
 async function calculateRankingFromPredictions(client: SupabaseClient): Promise<RankingEntry[]> {
-  const [{ data: predictionsData }, { data: matchesData }, { data: usersData }] = await Promise.all([
+  const [{ data: predictionsData }, { data: matchesData }, { data: usersData }, { data: preCopaData }] = await Promise.all([
     client.from("predictions").select("*"),
-    client.from("matches").select("id, home_score, away_score, phase"),
+    client.from("matches").select("id, home_score, away_score, phase, group_name, winner, winner_type"),
     client.from("users").select("id, full_name, email"),
+    client.from("pre_copa_predictions").select("user_id, points"),
   ]);
 
   const predictions = predictionsData || [];
@@ -79,6 +83,14 @@ async function calculateRankingFromPredictions(client: SupabaseClient): Promise<
 
   const userMap = new Map<string, { full_name?: string | null; email?: string | null }>();
   users.forEach((user) => userMap.set(user.id, user));
+
+  // Mapa de pontos pré-copa por usuário
+  const preCopaPointsMap = new Map<string, number>();
+  (preCopaData || []).forEach((pc: any) => {
+    if (pc.user_id && typeof pc.points === "number") {
+      preCopaPointsMap.set(pc.user_id, pc.points);
+    }
+  });
 
   const scoreMap = new Map<string, RankingEntry>();
 
@@ -119,6 +131,32 @@ async function calculateRankingFromPredictions(client: SupabaseClient): Promise<
         exact_scores: exact,
         group_stage_points: isGroup ? matchPoints : 0,
         knockout_points: isKnockout ? matchPoints : 0,
+      });
+    }
+  });
+
+  // Somar pontos de pré-copa ao total de cada usuário
+  scoreMap.forEach((entry, userId) => {
+    const preCopaPoints = preCopaPointsMap.get(userId) ?? 0;
+    entry.pre_copa_points = preCopaPoints;
+    entry.total_points += preCopaPoints;
+  });
+
+  // Adicionar usuários que só têm pré-copa (sem palpites de partida ainda)
+  preCopaPointsMap.forEach((points, userId) => {
+    if (!scoreMap.has(userId) && points > 0) {
+      const user = userMap.get(userId);
+      scoreMap.set(userId, {
+        rank: 0,
+        user_id: userId,
+        user_name: user?.full_name || user?.email || "Participante",
+        user_email: user?.email ?? null,
+        total_points: points,
+        pre_copa_points: points,
+        group_stage_points: 0,
+        knockout_points: 0,
+        exact_scores: 0,
+        created_at: undefined,
       });
     }
   });
