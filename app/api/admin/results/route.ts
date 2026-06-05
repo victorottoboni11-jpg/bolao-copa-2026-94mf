@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get request body
-    const { matchId, homeScore, awayScore } = await request.json();
+    const { matchId, homeScore, awayScore, winner, penalties } = await request.json();
 
     if (!matchId || homeScore === undefined || awayScore === undefined) {
       return NextResponse.json(
@@ -203,6 +203,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Update match with result
+    // Determinar winner_type baseado no placar e penaltis
+    const winnerType = penalties ? "penalties" : "normal";
+
     const { error: updateError } = await supabase
       .from("matches")
       .update({
@@ -210,6 +213,7 @@ export async function POST(request: NextRequest) {
         away_score: awayScore,
         status: "finished",
         is_finished: true,
+        ...(winner ? { winner, winner_type: winnerType } : {}),
       })
       .eq("id", matchId);
 
@@ -273,3 +277,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
