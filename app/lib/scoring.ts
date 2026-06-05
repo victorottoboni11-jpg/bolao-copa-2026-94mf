@@ -78,19 +78,27 @@ export function calculateKnockoutPoints(prediction: Prediction, match: Match): n
     home_score > away_score ? "home" :
     away_score > home_score ? "away" : null
   );
-  // Se empate no tempo normal, classificado é definido por winner_type + winner do match
-  const actualViaPenalties = match.winner_type === "penalties";
+  // Método real de classificação: normal, extra_time ou penalties
+  const actualMethod: "normal" | "extra_time" | "penalties" =
+    match.winner_type === "penalties" ? "penalties" :
+    match.winner_type === "extra_time" ? "extra_time" : "normal";
 
   // O que o usuário previu
   const predictedWinnerSide = predicted_winner ?? (
     predicted_home > predicted_away ? "home" :
     predicted_away > predicted_home ? "away" : null
   );
-  const predictedViaPenalties = predicted_penalties ?? false;
+
+  // Método previsto pelo usuário
+  const pred = prediction as any;
+  const predictedMethod: "normal" | "extra_time" | "penalties" =
+    pred.predicted_method === "penalties" ? "penalties" :
+    pred.predicted_method === "extra_time" ? "extra_time" :
+    (predicted_penalties ? "penalties" : "normal"); // retrocompatibilidade
 
   const exactScore = predicted_home === home_score && predicted_away === away_score;
   const correctWinner = actualWinner !== null && predictedWinnerSide === actualWinner;
-  const correctResult = actualViaPenalties === predictedViaPenalties; // acertou se foi normal ou pênaltis
+  const correctResult = actualMethod === predictedMethod;
 
   // Cravada: class + placar + resultado (normal/pen)
   if (correctWinner && exactScore && correctResult) {
