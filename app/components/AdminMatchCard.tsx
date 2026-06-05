@@ -6,8 +6,8 @@ import type { AdminMatch } from "@/app/lib/admin";
 
 interface AdminMatchCardProps {
   match: AdminMatch;
-  onSaveScore: (matchId: string, homeScore: number, awayScore: number, winner?: string, penalties?: boolean) => Promise<void>;
-  onFinalizeMatch: (matchId: string, homeScore: number, awayScore: number, winner?: string, penalties?: boolean) => Promise<void>;
+  onSaveScore: (matchId: string, homeScore: number, awayScore: number, winner?: string, penalties?: boolean, method?: string) => Promise<void>;
+  onFinalizeMatch: (matchId: string, homeScore: number, awayScore: number, winner?: string, penalties?: boolean, method?: string) => Promise<void>;
   onReopenMatch: (matchId: string) => Promise<void>;
   isProcessing: boolean;
 }
@@ -19,12 +19,20 @@ export function AdminMatchCard({ match, onSaveScore, onFinalizeMatch, onReopenMa
   const [awayScore, setAwayScore] = useState<number | string>(match.away_score ?? "");
   const [winner, setWinner] = useState<string | null>(match.winner ?? null);
   const [penalties, setPenalties] = useState<boolean>(match.winner_type === "penalties");
+  const [method, setMethod] = useState<"normal" | "extra_time" | "penalties">(
+    match.winner_type === "penalties" ? "penalties" :
+    match.winner_type === "extra_time" ? "extra_time" : "normal"
+  );
 
   useEffect(() => {
     setHomeScore(match.home_score ?? "");
     setAwayScore(match.away_score ?? "");
     setWinner(match.winner ?? null);
-    setPenalties(match.winner_type === "penalties");
+    const wt = match.winner_type;
+    const m: "normal" | "extra_time" | "penalties" =
+      wt === "penalties" ? "penalties" : wt === "extra_time" ? "extra_time" : "normal";
+    setMethod(m);
+    setPenalties(m === "penalties");
   }, [match.home_score, match.away_score, match.winner, match.winner_type]);
 
   const isFinished = match.is_finished === true || match.status === "finished";
@@ -46,7 +54,7 @@ export function AdminMatchCard({ match, onSaveScore, onFinalizeMatch, onReopenMa
       alert("Informe placares válidos antes de salvar.");
       return;
     }
-    await onSaveScore(match.id, homeNum, awayNum, winner ?? undefined, penalties);
+    await onSaveScore(match.id, homeNum, awayNum, winner ?? undefined, method === "penalties", method);
   };
 
   const handleFinalize = async () => {
@@ -58,7 +66,7 @@ export function AdminMatchCard({ match, onSaveScore, onFinalizeMatch, onReopenMa
       alert("Selecione o time classificado antes de finalizar.");
       return;
     }
-    await onFinalizeMatch(match.id, homeNum, awayNum, winner ?? undefined, penalties);
+    await onFinalizeMatch(match.id, homeNum, awayNum, winner ?? undefined, method === "penalties", method);
   };
 
   const handleReopen = async () => {
@@ -151,35 +159,25 @@ export function AdminMatchCard({ match, onSaveScore, onFinalizeMatch, onReopenMa
               </button>
             </div>
 
-            {/* Pênaltis — só se empate */}
-            {isEmpatado && (
-              <div className="space-y-2">
-                <p className="text-xs text-slate-400">Como foi definido?</p>
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    disabled={isFinished || isProcessing}
-                    onClick={() => setPenalties(false)}
-                    className={`flex-1 rounded-xl py-2 text-xs font-bold border transition ${
-                      !penalties
-                        ? "bg-[#24cfff] text-black border-[#24cfff]"
-                        : "bg-transparent text-white border-white/20 hover:border-[#24cfff]"
-                    } disabled:opacity-50`}
-                  >
-                    Tempo Normal
-                  </button>
-                  <button
-                    type="button"
-                    disabled={isFinished || isProcessing}
-                    onClick={() => setPenalties(true)}
-                    className={`flex-1 rounded-xl py-2 text-xs font-bold border transition ${
-                      penalties
-                        ? "bg-[#24cfff] text-black border-[#24cfff]"
-                        : "bg-transparent text-white border-white/20 hover:border-[#24cfff]"
-                    } disabled:opacity-50`}
-                  >
-                    Pênaltis
-                  </button>
+            {/* Método de classificação — só se empate */}
+            {homeScore === awayScore && (
+              <div className="space-y-1">
+                <p className="text-xs text-gray-400 text-center">Método de classificação</p>
+                <div className="flex gap-1">
+                  {(["normal", "extra_time", "penalties"] as const).map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => { setMethod(m); setPenalties(m === "penalties"); }}
+                      className={`flex-1 py-1.5 rounded text-xs font-bold transition border ${
+                        method === m
+                          ? "bg-[#24cfff] text-black border-[#24cfff]"
+                          : "bg-transparent text-white border-[#00ffb244] hover:border-[#24cfff]"
+                      }`}
+                    >
+                      {m === "normal" ? "Normal" : m === "extra_time" ? "Prorrog." : "Pênaltis"}
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
