@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/app/lib/auth";
+import { fetchRanking } from "@/app/lib/rankings";
 import type { RankingEntry } from "@/app/types";
 
 export default function RankingPage() {
@@ -14,9 +15,15 @@ export default function RankingPage() {
     if (!user) return;
 
     const loadRanking = async () => {
-      // TODO: Fetch ranking from Supabase
-      setRanking([]);
-      setLoadingData(false);
+      try {
+        const data = await fetchRanking();
+        setRanking(data);
+      } catch (err) {
+        console.error("Erro ao carregar ranking:", err);
+        setRanking([]);
+      } finally {
+        setLoadingData(false);
+      }
     };
 
     loadRanking();
