@@ -8,44 +8,31 @@ import { calculateExactScores, calculateCorrectResults, calculateMatchPoints } f
 import { useAuth } from "@/app/lib/auth";
 import { supabase } from "@/app/lib/supabase";
 import { formatBrazilTime } from "@/app/lib/dateUtils";
+import { savePrediction } from "@/app/lib/predictions";
 
 import type { Match, Prediction } from "@/app/types";
 
-function getUtcDay(kickoffAt: string): number {
-  const d = new Date(kickoffAt);
-  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+const LOCK_MINUTES = 30;
+
+function isLocked(kickoffAt?: string) {
+  if (!kickoffAt) return true;
+  const cutoff = new Date(kickoffAt).getTime() - LOCK_MINUTES * 60 * 1000;
+  return Date.now() >= cutoff;
 }
 
-function getUpcomingMatches(matches: Match[]): Match[] {
-  const nowUtc = Date.now();
+function getNext24hMatches(matches: Match[]): Match[] {
+  const now = Date.now();
+  const in24h = now + 24 * 60 * 60 * 1000;
 
-  // Jogos futuros ordenados por kickoff
-  const upcoming = matches
+  return matches
     .filter((m) => {
-      const t = m.kickoff_at ? new Date(m.kickoff_at).getTime() : null;
-      return t !== null && t > nowUtc;
+      if (!m.kickoff_at) return false;
+      const t = new Date(m.kickoff_at).getTime();
+      // Jogo ainda não passou do lock E começa nas próximas 24h
+      const cutoff = t - LOCK_MINUTES * 60 * 1000;
+      return cutoff > now && t <= in24h;
     })
     .sort((a, b) => new Date(a.kickoff_at!).getTime() - new Date(b.kickoff_at!).getTime());
-
-  if (upcoming.length === 0) return [];
-
-  // Pega os primeiros 8 jogos
-  const first8 = upcoming.slice(0, 8);
-
-  if (upcoming.length <= 8) return first8;
-
-  // Dia UTC do último jogo nos primeiros 8
-  const lastOf8Day = getUtcDay(first8[first8.length - 1].kickoff_at!);
-
-  // Dia seguinte ao último dos 8
-  const nextDay = lastOf8Day + 86400000;
-
-  // Todos os jogos do dia seguinte (mesmo que sejam muitos)
-  const nextDayMatches = upcoming.slice(8).filter((m) => {
-    return getUtcDay(m.kickoff_at!) === nextDay;
-  });
-
-  return [...first8, ...nextDayMatches];
 }
 
 export default function DashboardPage() {
@@ -54,47 +41,43 @@ export default function DashboardPage() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  // scores locais para edição inline: matchId -> [home, away]
+  const [scores, setScores] = useState<Record<string, [number, number]>>({});
+  const [saving, setSaving] = useState<Record<string, boolean>>({});
+  const [saved, setSaved] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     async function loadData() {
-      if (!user?.id) {
-        setLoadingData(false);
-        return;
-      }
-
+      if (!user?.id) { setLoadingData(false); return; }
       setLoadingData(true);
 
-      const { data: matchesData, error: matchesError } = await supabase
+      const { data: matchesData } = await supabase
         .from("matches")
         .select(`
           *,
-          home_team_info:teams!matches_home_team_id_fkey(*),
-          away_team_info:teams!matches_away_team_id_fkey(*)
+          home_team_info:home_team_id (id, name, fifa_code, flag_url),
+          away_team_info:away_team_id (id, name, fifa_code, flag_url)
         `)
         .order("kickoff_at", { ascending: true });
 
-      if (matchesError) {
-        console.error("SUPABASE ERROR:", matchesError);
-        setLoadingData(false);
-        return;
-      }
-
       setMatches(matchesData || []);
 
-      const { data: predictionsData, error: predictionsError } =
-        await supabase
-          .from("predictions")
-          .select("*")
-          .eq("user_id", user.id);
+      const { data: predictionsData } = await supabase
+        .from("predictions")
+        .select("*")
+        .eq("user_id", user.id);
 
-      if (predictionsError) {
-        console.error("PREDICTIONS ERROR:", predictionsError);
+      const preds = predictionsData || [];
+      setPredictions(preds);
+
+      // Inicializar scores com palpites existentes
+      const initialScores: Record<string, [number, number]> = {};
+      for (const p of preds) {
+        initialScores[p.match_id] = [p.predicted_home ?? 0, p.predicted_away ?? 0];
       }
-
-      setPredictions(predictionsData || []);
+      setScores(initialScores);
       setLoadingData(false);
     }
-
     loadData();
   }, [user]);
 
@@ -110,7 +93,23 @@ export default function DashboardPage() {
     }, 0);
   }, [predictions, matches]);
 
-  const upcomingMatches = useMemo(() => getUpcomingMatches(matches), [matches]);
+  const upcomingMatches = useMemo(() => getNext24hMatches(matches), [matches]);
+
+  const handleSave = async (matchId: string) => {
+    if (!user) return;
+    setSaving((s) => ({ ...s, [matchId]: true }));
+    const [home, away] = scores[matchId] ?? [0, 0];
+    const saved = await savePrediction(user.id, matchId, home, away);
+    if (saved) {
+      setPredictions((prev) => {
+        const filtered = prev.filter((p) => p.match_id !== matchId);
+        return [...filtered, saved];
+      });
+      setSaved((s) => ({ ...s, [matchId]: true }));
+      setTimeout(() => setSaved((s) => ({ ...s, [matchId]: false })), 2000);
+    }
+    setSaving((s) => ({ ...s, [matchId]: false }));
+  };
 
   if (loading || loadingData) {
     return (
@@ -187,80 +186,112 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* PRÓXIMOS JOGOS */}
-        {upcomingMatches.length > 0 && (
-          <div className="rounded-3xl border border-[#00ffb233] bg-[#050816] p-6">
-            <h2 className="text-2xl font-bold text-[#00ffb2] mb-6">Próximos jogos</h2>
+        {/* PRÓXIMOS JOGOS COM PALPITE INLINE */}
+        <div className="rounded-3xl border border-[#00ffb233] bg-[#050816] p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-[#00ffb2]">Próximos jogos</h2>
+            <span className="text-xs text-gray-400 border border-[#00ffb233] px-3 py-1 rounded-full">
+              Próximas 24h — palpites abertos
+            </span>
+          </div>
+
+          {upcomingMatches.length === 0 ? (
+            <div className="text-center py-8 text-gray-400">
+              <p>Nenhum jogo aberto para palpites nas próximas 24h.</p>
+              <Link href="/fase-de-grupos" className="mt-3 inline-block text-[#00ffb2] text-sm underline">
+                Ver todos os jogos →
+              </Link>
+            </div>
+          ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {upcomingMatches.map((match) => {
                 const home = match.home_team_info as any;
                 const away = match.away_team_info as any;
                 const prediction = predictions.find((p) => p.match_id === match.id);
-                const hasPrediction = !!prediction;
+                const locked = isLocked(match.kickoff_at);
+                const [homeScore, awayScore] = scores[match.id] ?? [prediction?.predicted_home ?? 0, prediction?.predicted_away ?? 0];
+                const isSaving = saving[match.id];
+                const justSaved = saved[match.id];
 
                 return (
-                  <div key={match.id} className="rounded-2xl border border-[#00ffb222] bg-[#081116] p-4 flex flex-col gap-3">
+                  <div key={match.id} className={`rounded-2xl border ${locked ? "border-red-900/40 bg-[#0a0505]" : "border-[#00ffb222] bg-[#081116]"} p-4 flex flex-col gap-3`}>
 
                     {/* Fase + horário */}
-                    <div className="flex items-center justify-between text-xs text-gray-400">
+                    <div className="flex items-center justify-between text-xs">
                       <span className="uppercase tracking-wider text-[#00ffb2] font-semibold">
                         {match.phase === "friendly" ? "Amistoso" : match.group_name ? `Grupo ${match.group_name}` : match.phase}
                       </span>
-                      <span>{formatBrazilTime(match.kickoff_at, "full")}</span>
+                      <span className="text-gray-400">{formatBrazilTime(match.kickoff_at, "full")}</span>
                     </div>
 
-                    {/* Times */}
-                    <div className="flex items-center justify-between gap-2">
+                    {/* Times + inputs de palpite */}
+                    <div className="flex items-center gap-2">
 
                       {/* Mandante */}
-                      <div className="flex flex-col items-center gap-1 flex-1 text-center">
+                      <div className="flex flex-col items-center gap-1 w-16 text-center">
                         {home?.flag_url ? (
                           <Image src={home.flag_url} alt={home.name} width={40} height={28}
                             className="rounded object-cover border border-[#00ffb222]" />
                         ) : (
                           <div className="w-10 h-7 rounded bg-[#111827]" />
                         )}
-                        <p className="text-xs font-semibold text-white truncate max-w-[80px]">
-                          {home?.name || "Mandante"}
+                        <p className="text-[10px] font-semibold text-white truncate w-full">
+                          {home?.fifa_code || home?.name || "Casa"}
                         </p>
                       </div>
 
-                      {/* Placar / VS */}
-                      <div className="flex flex-col items-center gap-1">
-                        {hasPrediction ? (
-                          <div className="flex items-center gap-1">
-                            <span className="w-8 h-8 rounded bg-[#00ffb215] border border-[#00ffb244] flex items-center justify-center text-white font-bold text-sm">
-                              {prediction.predicted_home}
-                            </span>
-                            <span className="text-gray-400 text-xs">x</span>
-                            <span className="w-8 h-8 rounded bg-[#00ffb215] border border-[#00ffb244] flex items-center justify-center text-white font-bold text-sm">
-                              {prediction.predicted_away}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-gray-500 text-sm font-bold">VS</span>
-                        )}
-                        {hasPrediction ? (
-                          <span className="text-[10px] text-[#00ffb2]">seu palpite</span>
-                        ) : (
-                          <span className="text-[10px] text-orange-400">sem palpite</span>
-                        )}
+                      {/* Inputs de placar */}
+                      <div className="flex-1 flex items-center justify-center gap-2">
+                        <input
+                          type="number" min={0}
+                          value={scores[match.id]?.[0] ?? prediction?.predicted_home ?? 0}
+                          disabled={locked}
+                          onChange={(e) => setScores((s) => ({ ...s, [match.id]: [Number(e.target.value), s[match.id]?.[1] ?? 0] }))}
+                          className="w-10 h-10 bg-[#081120] border border-[#00ffb244] rounded-lg text-center text-white font-bold text-lg disabled:opacity-40"
+                        />
+                        <span className="text-white font-bold">x</span>
+                        <input
+                          type="number" min={0}
+                          value={scores[match.id]?.[1] ?? prediction?.predicted_away ?? 0}
+                          disabled={locked}
+                          onChange={(e) => setScores((s) => ({ ...s, [match.id]: [s[match.id]?.[0] ?? 0, Number(e.target.value)] }))}
+                          className="w-10 h-10 bg-[#081120] border border-[#00ffb244] rounded-lg text-center text-white font-bold text-lg disabled:opacity-40"
+                        />
                       </div>
 
                       {/* Visitante */}
-                      <div className="flex flex-col items-center gap-1 flex-1 text-center">
+                      <div className="flex flex-col items-center gap-1 w-16 text-center">
                         {away?.flag_url ? (
                           <Image src={away.flag_url} alt={away.name} width={40} height={28}
                             className="rounded object-cover border border-[#00ffb222]" />
                         ) : (
                           <div className="w-10 h-7 rounded bg-[#111827]" />
                         )}
-                        <p className="text-xs font-semibold text-white truncate max-w-[80px]">
-                          {away?.name || "Visitante"}
+                        <p className="text-[10px] font-semibold text-white truncate w-full">
+                          {away?.fifa_code || away?.name || "Fora"}
                         </p>
                       </div>
 
                     </div>
+
+                    {/* Botão salvar ou status */}
+                    {locked ? (
+                      <div className="text-center text-xs text-red-400 font-semibold">
+                        🔒 Palpites encerrados
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => handleSave(match.id)}
+                        disabled={isSaving}
+                        className={`w-full py-2 rounded-xl text-sm font-bold transition ${
+                          justSaved
+                            ? "bg-[#00ffb2]/20 text-[#00ffb2] border border-[#00ffb2]/40"
+                            : "bg-gradient-to-r from-[#00ffb2] to-[#24cfff] text-black hover:opacity-90"
+                        } disabled:opacity-50`}
+                      >
+                        {isSaving ? "Salvando..." : justSaved ? "✓ Salvo!" : prediction ? "Atualizar Palpite" : "Confirmar Palpite"}
+                      </button>
+                    )}
 
                     {/* Estádio */}
                     {match.stadium && (
@@ -271,8 +302,8 @@ export default function DashboardPage() {
                 );
               })}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
       </section>
     </main>
