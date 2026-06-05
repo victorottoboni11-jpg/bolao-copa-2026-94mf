@@ -239,27 +239,21 @@ export async function POST(request: NextRequest) {
     if (predictions && predictions.length > 0) {
       const { calculateMatchPoints } = await import("../../../lib/scoring");
 
-      // Calculate points for each prediction
-      const updates = predictions.map((pred) => {
+      // Calculate points for each prediction and update one by one
+      for (const pred of predictions) {
         const scoring = calculateMatchPoints(pred, { ...match, home_score: homeScore, away_score: awayScore });
-        return {
-          id: pred.id,
-          points: scoring.points,
-          updated_at: new Date().toISOString(),
-        };
-      });
 
-      // Update predictions
-      const { error: updatePredError } = await supabase
-        .from("predictions")
-        .upsert(updates, { onConflict: "id" });
+        const { error: updatePredError } = await supabase
+          .from("predictions")
+          .update({
+            points: scoring.points,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", pred.id);
 
-      if (updatePredError) {
-        console.error("Error updating predictions:", updatePredError);
-        return NextResponse.json(
-          { error: `Failed to update predictions: ${updatePredError.message}` },
-          { status: 500 }
-        );
+        if (updatePredError) {
+          console.error("Error updating prediction:", pred.id, updatePredError);
+        }
       }
     }
 
