@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { matchId, predictedHome, predictedAway, predictedWinner, predictedPenalties } = body || {};
+    const { matchId, predictedHome, predictedAway, predictedWinner, predictedPenalties, predictedMethod } = body || {};
 
     if (!matchId || predictedHome === undefined || predictedAway === undefined) {
       return NextResponse.json(
@@ -73,6 +73,7 @@ export async function POST(request: NextRequest) {
     if (isKnockout) {
       upsertRow.predicted_winner = predictedWinner ?? null;
       upsertRow.predicted_penalties = predictedPenalties ?? false;
+      upsertRow.predicted_method = predictedMethod ?? "normal";
     }
 
     const { data, error } = await supabase
