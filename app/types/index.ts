@@ -37,53 +37,31 @@ export type MatchPhase =
 
 export type Match = {
   id: string;
-
   phase: MatchPhase;
-
   phase_order?: number;
-
   match_number?: number;
-
   home_team_id?: string | null;
   away_team_id?: string | null;
-
   home_team?: Team | string | null;
   away_team?: Team | string | null;
-
   home_team_info?: Team | null;
   away_team_info?: Team | null;
-
   kickoff_at?: string;
-
   venue?: string | null;
-
   stadium?: string | null;
-
   city?: string | null;
-
   group_name?: string | null;
-
   match_date?: string;
-
   match_datetime?: string;
-
   home_score?: number | null;
   away_score?: number | null;
-
   status?: "pending" | "live" | "finished" | "scheduled" | string;
-
   is_finished?: boolean;
-
   winner?: "home" | "away" | "draw" | null;
-
   winner_type?: "normal" | "penalties" | null;
-
   round?: number | null;
-
   result_updated?: boolean;
-
   created_at?: string;
-
   updated_at?: string;
 };
 
@@ -93,7 +71,10 @@ export type Prediction = {
   match_id: string;
   predicted_home: number;
   predicted_away: number;
+  predicted_winner?: string | null;      // "home" | "away" — classificado no mata-mata
+  predicted_penalties?: boolean | null;   // true = classificação por pênaltis
   points: number;
+  is_locked?: boolean;
   created_at?: string;
   updated_at?: string;
 };
@@ -169,7 +150,6 @@ export type RankingEntry = {
 
 export type GroupStandings = {
   group_name: string;
-
   teams: Array<{
     team_id: string;
     team_name: string;
