@@ -113,7 +113,7 @@ export default function Home() {
             href="/dashboard"
             className="p-6 bg-gradient-to-br from-[#081116] to-[#070b16] border border-[#00ffb2]/20 rounded-xl hover:border-[#00ffb2]/50 transition-all hover:shadow-lg hover:shadow-[#00ffb2]/10"
           >
-            <h3 className="font-semibold text-[#00ffb2] mb-2">🎯 Dashboard</h3>
+            <h3 className="font-semibold text-[#00ffb2] mb-2">🎯 Palpites</h3>
             <p className="text-sm text-gray-400">
               Visualize seus palpites e acompanhe os resultados
             </p>
