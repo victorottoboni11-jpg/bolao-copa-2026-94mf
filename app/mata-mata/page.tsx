@@ -6,221 +6,513 @@ import { useAuth } from "@/app/lib/auth";
 import { supabase } from "@/app/lib/supabase";
 import { getPredictionsForMatches, savePrediction, isPredictionLocked } from "@/app/lib/predictions";
 import { getPredictionsOpenSetting } from "@/app/lib/matches";
-import { getMatchKickoffAt, compareKickoffTimes } from "@/app/lib/matchDate";
-import { KNOCKOUT_PHASE_ORDER, formatPhaseLabel } from "@/app/lib/phases";
-import { MatchCard } from "@/app/components/MatchCard";
+import { getMatchKickoffAt } from "@/app/lib/matchDate";
+import { formatBrazilTime } from "@/app/lib/dateUtils";
 import { Toast } from "@/app/components/Toast";
 import type { Match, Prediction } from "@/app/types";
 
+// Estrutura do chaveamento oficial FIFA 2026
+const BRACKET = {
+  left: [
+    { match: 74, home: "1ºE", away: "3ºABCDF" },
+    { match: 77, home: "1ºI", away: "3ºCDFGH" },
+    { match: 75, home: "1ºF", away: "2ºC" },
+    { match: 73, home: "2ºA", away: "2ºB" },
+    { match: 83, home: "2ºK", away: "2ºL" },
+    { match: 84, home: "1ºH", away: "2ºJ" },
+    { match: 81, home: "1ºD", away: "3ºBEFIJ" },
+    { match: 82, home: "1ºG", away: "3ºAEHIJ" },
+  ],
+  right: [
+    { match: 79, home: "1ºA", away: "3ºCEFHI" },
+    { match: 76, home: "1ºC", away: "2ºF" },
+    { match: 78, home: "2ºE", away: "2ºI" },
+    { match: 85, home: "1ºB", away: "3ºEFGIJ" },
+    { match: 86, home: "1ºJ", away: "2ºH" },
+    { match: 88, home: "2ºD", away: "2ºG" },
+    { match: 87, home: "1ºK", away: "3ºDEIJL" },
+    { match: 80, home: "1ºL", away: "3ºEHIJK" },
+  ],
+  oitavas_left: [
+    { match: 89, home: "W74", away: "W77" },
+    { match: 90, home: "W73", away: "W75" },
+    { match: 93, home: "W83", away: "W84" },
+    { match: 94, home: "W81", away: "W82" },
+  ],
+  oitavas_right: [
+    { match: 91, home: "W76", away: "W78" },
+    { match: 92, home: "W79", away: "W80" },
+    { match: 95, home: "W86", away: "W88" },
+    { match: 96, home: "W85", away: "W87" },
+  ],
+  quartas_left: [
+    { match: 97, home: "W89", away: "W90" },
+    { match: 98, home: "W93", away: "W94" },
+  ],
+  quartas_right: [
+    { match: 99, home: "W91", away: "W92" },
+    { match: 100, home: "W95", away: "W96" },
+  ],
+  semi_left: { match: 101, home: "W97", away: "W98" },
+  semi_right: { match: 102, home: "W99", away: "W100" },
+  terceiro: { match: 103, home: "P101", away: "P102" },
+  final: { match: 104, home: "W101", away: "W102" },
+};
+
+interface MatchData {
+  id: string;
+  match_number: number;
+  phase: string;
+  kickoff_at?: string;
+  home_team?: string | null;
+  away_team?: string | null;
+  home_score?: number | null;
+  away_score?: number | null;
+  is_finished?: boolean;
+  winner?: string | null;
+  winner_type?: string | null;
+  home_team_info?: any;
+  away_team_info?: any;
+}
+
+function MatchNode({
+  matchNum,
+  homeLabel,
+  awayLabel,
+  matchData,
+  prediction,
+  locked,
+  saving,
+  onSelect,
+  selected,
+}: {
+  matchNum: number;
+  homeLabel: string;
+  awayLabel: string;
+  matchData?: MatchData;
+  prediction?: Prediction;
+  locked?: boolean;
+  saving?: boolean;
+  onSelect?: () => void;
+  selected?: boolean;
+}) {
+  const home = matchData?.home_team_info?.name || matchData?.home_team || homeLabel;
+  const away = matchData?.away_team_info?.name || matchData?.away_team || awayLabel;
+  const finished = matchData?.is_finished;
+  const hasPrediction = prediction && (prediction.predicted_home !== undefined);
+  const kickoff = matchData?.kickoff_at ? formatBrazilTime(matchData.kickoff_at, "date") : null;
+
+  return (
+    <div
+      onClick={!finished && !locked && onSelect ? onSelect : undefined}
+      className={`
+        relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200 w-[130px]
+        ${selected ? "ring-2 ring-[#00ffb2] shadow-lg shadow-[#00ffb2]/20" : ""}
+        ${finished ? "border border-[#00ffb2]/30 bg-[#081120]" : "border border-[#ffffff15] bg-[#050816] hover:border-[#00ffb2]/40"}
+        ${!finished && !locked && onSelect ? "hover:scale-105" : ""}
+      `}
+    >
+      {kickoff && (
+        <div className="px-1.5 py-0.5 text-[9px] text-gray-600 border-b border-[#ffffff08] truncate">
+          J{matchNum} · {kickoff}
+        </div>
+      )}
+      {!kickoff && (
+        <div className="px-1.5 py-0.5 text-[9px] text-gray-700 border-b border-[#ffffff08]">
+          J{matchNum}
+        </div>
+      )}
+      <div className={`flex items-center justify-between px-2 py-1 text-[11px] ${finished && matchData?.winner === "home" ? "text-[#00ffb2] font-bold" : "text-gray-300"}`}>
+        <span className="truncate flex-1">{home}</span>
+        {finished && <span className="ml-1 font-bold text-white">{matchData?.home_score}</span>}
+        {!finished && hasPrediction && <span className="ml-1 text-[#00ffb2]/60">{prediction?.predicted_home}</span>}
+      </div>
+      <div className="h-px bg-[#ffffff08]" />
+      <div className={`flex items-center justify-between px-2 py-1 text-[11px] ${finished && matchData?.winner === "away" ? "text-[#00ffb2] font-bold" : "text-gray-300"}`}>
+        <span className="truncate flex-1">{away}</span>
+        {finished && <span className="ml-1 font-bold text-white">{matchData?.away_score}</span>}
+        {!finished && hasPrediction && <span className="ml-1 text-[#00ffb2]/60">{prediction?.predicted_away}</span>}
+      </div>
+      {finished && matchData?.winner_type && matchData.winner_type !== "normal" && (
+        <div className="px-2 py-0.5 text-[9px] text-center text-[#24cfff] border-t border-[#ffffff08]">
+          {matchData.winner_type === "penalties" ? "PEN" : "PRORR"}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Connector({ vertical = false }: { vertical?: boolean }) {
+  return vertical
+    ? <div className="w-px h-4 bg-[#00ffb2]/20 mx-auto" />
+    : <div className="h-px w-4 bg-[#00ffb2]/20" />;
+}
+
+function PalpiteModal({
+  matchData,
+  prediction,
+  onSave,
+  onClose,
+  saving,
+}: {
+  matchData: MatchData;
+  prediction?: Prediction;
+  onSave: (home: number, away: number, winner?: string, penalties?: boolean, method?: string) => void;
+  onClose: () => void;
+  saving: boolean;
+}) {
+  const [homeScore, setHomeScore] = useState(prediction?.predicted_home ?? 0);
+  const [awayScore, setAwayScore] = useState(prediction?.predicted_away ?? 0);
+  const [winner, setWinner] = useState<string | null>((prediction as any)?.predicted_winner ?? null);
+  const [method, setMethod] = useState<"normal" | "extra_time" | "penalties">(
+    (prediction as any)?.predicted_method === "penalties" ? "penalties" :
+    (prediction as any)?.predicted_method === "extra_time" ? "extra_time" : "normal"
+  );
+
+  const home = matchData.home_team_info?.name || matchData.home_team || "Mandante";
+  const away = matchData.away_team_info?.name || matchData.away_team || "Visitante";
+  const isEmpatado = homeScore === awayScore;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
+      <div className="w-full max-w-md rounded-2xl border border-[#00ffb2]/30 bg-[#070b16] p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-xs text-[#00ffb2] font-semibold uppercase tracking-wider">J{matchData.match_number} · Palpite</p>
+          <button onClick={onClose} className="text-gray-500 hover:text-white text-lg">✕</button>
+        </div>
+
+        {/* Times + placar */}
+        <div className="grid grid-cols-3 items-center gap-3 mb-4">
+          <div className="text-center">
+            {matchData.home_team_info?.flag_url && (
+              <img src={matchData.home_team_info.flag_url} alt={home} className="w-12 h-8 rounded mx-auto mb-1 object-cover border border-[#00ffb2]/20" />
+            )}
+            <p className="text-xs font-bold text-white truncate">{home}</p>
+          </div>
+          <div className="flex items-center justify-center gap-2">
+            <input type="number" min={0} value={homeScore}
+              onChange={e => setHomeScore(Number(e.target.value))}
+              className="w-12 h-12 bg-[#081120] border border-[#00ffb244] rounded-lg text-center text-white text-xl font-bold"
+            />
+            <span className="text-white font-bold">x</span>
+            <input type="number" min={0} value={awayScore}
+              onChange={e => setAwayScore(Number(e.target.value))}
+              className="w-12 h-12 bg-[#081120] border border-[#00ffb244] rounded-lg text-center text-white text-xl font-bold"
+            />
+          </div>
+          <div className="text-center">
+            {matchData.away_team_info?.flag_url && (
+              <img src={matchData.away_team_info.flag_url} alt={away} className="w-12 h-8 rounded mx-auto mb-1 object-cover border border-[#00ffb2]/20" />
+            )}
+            <p className="text-xs font-bold text-white truncate">{away}</p>
+          </div>
+        </div>
+
+        {/* Classificado */}
+        <div className="space-y-3 border border-[#00ffb2]/15 rounded-xl p-3 bg-[#081120] mb-4">
+          <p className="text-xs text-[#00ffb2] font-semibold text-center uppercase tracking-wider">Quem se classifica?</p>
+          <div className="flex gap-2">
+            <button onClick={() => setWinner(winner === "home" ? null : "home")}
+              className={`flex-1 py-2 rounded-lg text-xs font-bold border transition ${winner === "home" ? "bg-[#00ffb2] text-black border-[#00ffb2]" : "bg-transparent text-white border-[#00ffb244] hover:border-[#00ffb2]"}`}>
+              {matchData.home_team_info?.fifa_code || home.slice(0, 8)}
+            </button>
+            <button onClick={() => setWinner(winner === "away" ? null : "away")}
+              className={`flex-1 py-2 rounded-lg text-xs font-bold border transition ${winner === "away" ? "bg-[#00ffb2] text-black border-[#00ffb2]" : "bg-transparent text-white border-[#00ffb244] hover:border-[#00ffb2]"}`}>
+              {matchData.away_team_info?.fifa_code || away.slice(0, 8)}
+            </button>
+          </div>
+          {isEmpatado && (
+            <div className="space-y-1">
+              <p className="text-[10px] text-gray-400 text-center">Como se classificou?</p>
+              <div className="flex gap-1">
+                {(["normal", "extra_time", "penalties"] as const).map(m => (
+                  <button key={m} onClick={() => setMethod(m)}
+                    className={`flex-1 py-1.5 rounded text-[10px] font-bold border transition ${method === m ? "bg-[#24cfff] text-black border-[#24cfff]" : "bg-transparent text-white border-[#00ffb244] hover:border-[#24cfff]"}`}>
+                    {m === "normal" ? "Normal" : m === "extra_time" ? "Prorrog." : "Pênaltis"}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <button
+          disabled={saving}
+          onClick={() => onSave(homeScore, awayScore, winner ?? undefined, method === "penalties", method)}
+          className="w-full py-3 rounded-xl bg-gradient-to-r from-[#00ffb2] to-[#24cfff] text-black font-bold hover:opacity-90 transition disabled:opacity-50"
+        >
+          {saving ? "Salvando..." : "Confirmar Palpite"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function MataMataPage() {
   const { user, loading } = useAuth();
-  const [matches, setMatches] = useState<Match[]>([]);
+  const [matchesMap, setMatchesMap] = useState<Record<number, MatchData>>({});
   const [predictions, setPredictions] = useState<Record<string, Prediction>>({});
   const [predictionsOpen, setPredictionsOpen] = useState(true);
   const [groupStageFinished, setGroupStageFinished] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
+  const [selectedMatch, setSelectedMatch] = useState<number | null>(null);
   const [savingMatchId, setSavingMatchId] = useState<string | null>(null);
-  const [pendingScores, setPendingScores] = useState<Record<string, { home: number; away: number; winner?: string; penalties?: boolean; method?: string }>>({});
   const [toast, setToast] = useState<{ type: "success" | "error" | "info"; message: string } | null>(null);
 
   useEffect(() => {
     if (!user) return;
-
-    const loadData = async () => {
+    const load = async () => {
       setLoadingData(true);
       try {
-        const [supabaseMatches, predictionsOpen] = await Promise.all([
-          supabase
-            .from("matches")
-            .select(`
-              *,
-              home_team_info:home_team_id (id, name, fifa_code, flag_url),
-              away_team_info:away_team_id (id, name, fifa_code, flag_url)
-            `)
-            .order("kickoff_at", { ascending: true }),
+        const [{ data }, open] = await Promise.all([
+          supabase.from("matches").select(`
+            id, match_number, phase, kickoff_at, home_score, away_score,
+            is_finished, winner, winner_type,
+            home_team_info:home_team_id (id, name, fifa_code, flag_url),
+            away_team_info:away_team_id (id, name, fifa_code, flag_url)
+          `).order("match_number", { ascending: true }),
           getPredictionsOpenSetting(),
         ]);
 
-        const { data, error } = supabaseMatches;
-        if (error) throw error;
-
-        console.log("MATA-MATA MATCHES TEAM INFO:", (data || []).map((match) => ({
-          id: match.id,
-          home_team_info: match.home_team_info,
-          away_team_info: match.away_team_info,
-        })));
-
-        const knockoutMatches = (data || []).filter((match) =>
-          ["round_of_32", "round_of_16", "quarterfinal", "semifinal", "third_place", "final"].includes(match.phase)
-        );
-        console.log("MATCHES FROM SUPABASE:", data);
-        console.log("MATCH COUNTS", {
-          total: data?.length ?? 0,
-          group: (data || []).filter((match) => match.phase === "group_stage").length,
-          knockout: knockoutMatches.length,
-          friendlies: (data || []).filter((match) => match.phase === "friendly").length,
-        });
-
-        setMatches(knockoutMatches);
-        setPredictionsOpen(predictionsOpen);
+        const all = data || [];
+        const map: Record<number, MatchData> = {};
+        all.forEach((m: any) => { map[m.match_number] = m; });
+        setMatchesMap(map);
+        setPredictionsOpen(open);
         setGroupStageFinished(
-          (data || [])
-            .filter((match) => match.phase === "group_stage")
-            .every((match) => match.is_finished === true)
+          all.filter((m: any) => m.phase === "group_stage").every((m: any) => m.is_finished === true)
         );
 
-        const predictionMap = await getPredictionsForMatches(user.id, knockoutMatches.map((match) => match.id));
-        setPredictions(predictionMap);
-      } catch (error) {
-        console.error("Erro ao carregar jogos do mata-mata:", error);
+        const knockoutIds = all
+          .filter((m: any) => ["round_of_32","round_of_16","quarterfinal","semifinal","third_place","final"].includes(m.phase))
+          .map((m: any) => m.id);
+        const predMap = await getPredictionsForMatches(user.id, knockoutIds);
+        setPredictions(predMap);
       } finally {
         setLoadingData(false);
       }
     };
-
-    loadData();
+    load();
   }, [user]);
 
-  const handleSavePrediction = async (matchId: string, homeScore: number, awayScore: number, winner?: string, penalties?: boolean, method?: string) => {
-    if (!user) return;
-    setSavingMatchId(matchId);
-
+  const handleSave = async (home: number, away: number, winner?: string, penalties?: boolean, method?: string) => {
+    if (!user || !selectedMatch) return;
+    const matchData = matchesMap[selectedMatch];
+    if (!matchData) return;
+    setSavingMatchId(matchData.id);
     try {
-      const saved = await savePrediction(user.id, matchId, homeScore, awayScore, winner ?? null, penalties ?? false);
-      if (!saved) {
+      const saved = await savePrediction(user.id, matchData.id, home, away, winner ?? null, penalties ?? false);
+      if (saved) {
+        setPredictions(p => ({ ...p, [matchData.id]: saved }));
+        setToast({ type: "success", message: "Palpite salvo!" });
+        setSelectedMatch(null);
+      } else {
         setToast({ type: "error", message: "Erro ao salvar palpite" });
-        return;
       }
-
-      setPredictions((current) => ({ ...current, [matchId]: saved }));
-      setToast({ type: "success", message: "Palpite salvo com sucesso" });
-    } catch (error) {
-      console.error("Erro ao salvar palpite no mata-mata:", error);
-      setToast({ type: "error", message: "Erro ao salvar palpite" });
     } finally {
       setSavingMatchId(null);
-      window.setTimeout(() => setToast(null), 3500);
+      setTimeout(() => setToast(null), 3000);
     }
   };
 
-  const sortedMatches = useMemo(() => {
-    return [...matches].sort((a, b) =>
-      compareKickoffTimes(getMatchKickoffAt(a), getMatchKickoffAt(b))
+  const node = (matchNum: number, homeLabel: string, awayLabel: string) => {
+    const m = matchesMap[matchNum];
+    const pred = m ? predictions[m.id] : undefined;
+    const locked = m ? isPredictionLocked(m.kickoff_at, predictionsOpen) : true;
+    return (
+      <MatchNode
+        matchNum={matchNum}
+        homeLabel={homeLabel}
+        awayLabel={awayLabel}
+        matchData={m}
+        prediction={pred}
+        locked={locked}
+        saving={m ? savingMatchId === m.id : false}
+        selected={selectedMatch === matchNum}
+        onSelect={!locked && groupStageFinished ? () => setSelectedMatch(matchNum) : undefined}
+      />
     );
-  }, [matches]);
+  };
 
   if (loading || !user) {
     return (
-      <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(0,255,178,0.14),_transparent_28%),_linear-gradient(180deg,#04070f_0%,#070b16_100%)] flex items-center justify-center px-4 py-8">
-        <div className="text-center space-y-4">
-          <div className="w-12 h-12 border-4 border-[#00ffb2]/30 border-t-[#00ffb2] rounded-full animate-spin mx-auto"></div>
-          <p className="text-[#00b2ff] font-semibold">Carregando...</p>
-        </div>
+      <div className="min-h-screen bg-[#04070f] flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-[#00ffb2]/30 border-t-[#00ffb2] rounded-full animate-spin" />
       </div>
     );
   }
 
-  const groupedByPhase = KNOCKOUT_PHASE_ORDER.map((phase) => ({
-    phase,
-    title: formatPhaseLabel(phase),
-    matches: sortedMatches.filter((match) => match.phase === phase),
-  })).filter((group) => group.matches.length > 0);
-
   return (
-    <main className="min-h-full bg-[radial-gradient(circle_at_top,_rgba(0,255,178,0.14),_transparent_28%),_linear-gradient(180deg,#04070f_0%,#070b16_100%)] px-4 py-8 text-white">
-      {toast ? <Toast type={toast.type} message={toast.message} /> : null}
-      <div className="mx-auto max-w-6xl space-y-8">
-        <header className="rounded-2xl border border-[#00ffb2]/20 bg-gradient-to-br from-[#081116] to-[#070b16] p-6 shadow-lg">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(0,255,178,0.08),_transparent_30%),_linear-gradient(180deg,#04070f_0%,#070b16_100%)] px-4 py-8 text-white">
+      {toast && <Toast type={toast.type} message={toast.message} />}
+      {selectedMatch && matchesMap[selectedMatch] && (
+        <PalpiteModal
+          matchData={matchesMap[selectedMatch]}
+          prediction={predictions[matchesMap[selectedMatch].id]}
+          onSave={handleSave}
+          onClose={() => setSelectedMatch(null)}
+          saving={savingMatchId === matchesMap[selectedMatch].id}
+        />
+      )}
+
+      <div className="mx-auto max-w-[1400px] space-y-6">
+        {/* Header */}
+        <header className="rounded-2xl border border-[#00ffb2]/20 bg-gradient-to-br from-[#081116] to-[#070b16] p-6">
+          <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs uppercase tracking-widest text-[#00ffb2]">Mata-Mata</p>
-              <h1 className="mt-2 text-3xl font-bold text-white">Jogos do mata-mata</h1>
-              <p className="mt-1 text-sm text-gray-400">Configure seus palpites para as fases eliminatórias.</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-[#00ffb2]">Copa do Mundo 2026</p>
+              <h1 className="mt-1 text-3xl font-bold">Mata-Mata</h1>
+              <p className="mt-1 text-sm text-gray-400">
+                {groupStageFinished
+                  ? "Clique em um jogo para fazer seu palpite"
+                  : "Disponível após o encerramento da fase de grupos"}
+              </p>
             </div>
-            <Link href="/dashboard" className="rounded-2xl bg-[#00ffb2] px-4 py-3 text-sm font-semibold text-slate-950 hover:bg-[#8bfcc7]">
-              Voltar ao Dashboard
+            <Link href="/dashboard" className="px-4 py-2 bg-gradient-to-r from-[#00ffb2] to-[#00b2ff] text-black font-semibold rounded-lg text-sm">
+              Voltar
             </Link>
-          </div>
-          <div className="mt-4 text-sm text-slate-400">
-            <span className="mr-2">Home</span>/ <span className="text-[#00ffb2]">Mata-Mata</span>
           </div>
         </header>
 
-        <div className="rounded-3xl border border-[#00ffb2]/20 bg-slate-950/90 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm uppercase tracking-[0.3em] text-[#00ffb2]">Resumo</p>
-              <p className="mt-2 text-lg font-semibold text-white">{sortedMatches.length} partidas do mata-mata</p>
+        {!groupStageFinished && (
+          <div className="rounded-2xl border border-[#00ffb2]/20 bg-[#050816] p-8 text-center">
+            <p className="text-2xl font-bold mb-2">🔒 Mata-mata bloqueado</p>
+            <p className="text-gray-400">Os palpites serão liberados após o admin finalizar todos os jogos da fase de grupos.</p>
+          </div>
+        )}
+
+        {/* Legenda */}
+        {groupStageFinished && (
+          <div className="flex flex-wrap gap-3 text-xs text-gray-400">
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#00ffb2]" />Com palpite</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-gray-600" />Sem palpite</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#24cfff]" />Finalizado</span>
+            <span className="text-gray-500">· Clique no jogo para palpitar</span>
+          </div>
+        )}
+
+        {/* Chaveamento em árvore */}
+        <div className="rounded-2xl border border-[#00ffb2]/20 bg-[#050816] p-6 overflow-x-auto">
+          <div className="min-w-[1100px]">
+
+            {/* Labels das fases */}
+            <div className="grid grid-cols-9 mb-4 text-center text-[10px] text-[#00ffb2] font-semibold uppercase tracking-wider">
+              <div>32-avos</div>
+              <div>Oitavas</div>
+              <div>Quartas</div>
+              <div>Semifinal</div>
+              <div>Final</div>
+              <div>Semifinal</div>
+              <div>Quartas</div>
+              <div>Oitavas</div>
+              <div>32-avos</div>
             </div>
-            <span className="rounded-full bg-[#00ffb2]/10 px-3 py-1 text-xs text-[#00ffb2]">{predictionsOpen ? "Palpites abertos" : "Palpites fechados"}</span>
+
+            {/* Bracket principal — 8 linhas */}
+            <div className="flex gap-1 items-stretch">
+
+              {/* COL 1: 32-avos esquerda */}
+              <div className="flex flex-col justify-around gap-1 flex-none">
+                {BRACKET.left.map(({ match, home, away }) => (
+                  <div key={match}>{node(match, home, away)}</div>
+                ))}
+              </div>
+
+              {/* Conectores 32-avos → oitavas esquerda */}
+              <div className="flex flex-col justify-around flex-none w-4">
+                {[0,1,2,3,4,5,6,7].map(i => (
+                  <div key={i} className={`flex-1 border-r border-t border-b border-[#00ffb2]/15 rounded-r-lg ${i % 2 === 0 ? "border-b-0 rounded-br-none" : "border-t-0 rounded-tr-none"}`} />
+                ))}
+              </div>
+
+              {/* COL 2: Oitavas esquerda */}
+              <div className="flex flex-col justify-around gap-1 flex-none" style={{paddingTop: '2.5rem', paddingBottom: '2.5rem'}}>
+                {BRACKET.oitavas_left.map(({ match, home, away }) => (
+                  <div key={match}>{node(match, home, away)}</div>
+                ))}
+              </div>
+
+              {/* Conectores oitavas → quartas esquerda */}
+              <div className="flex flex-col justify-around flex-none w-4">
+                {[0,1,2,3].map(i => (
+                  <div key={i} className={`flex-1 border-r border-t border-b border-[#00ffb2]/15 rounded-r-lg ${i % 2 === 0 ? "border-b-0 rounded-br-none" : "border-t-0 rounded-tr-none"}`} />
+                ))}
+              </div>
+
+              {/* COL 3: Quartas esquerda */}
+              <div className="flex flex-col justify-around gap-1 flex-none" style={{paddingTop: '5rem', paddingBottom: '5rem'}}>
+                {BRACKET.quartas_left.map(({ match, home, away }) => (
+                  <div key={match}>{node(match, home, away)}</div>
+                ))}
+              </div>
+
+              {/* Conectores quartas → semi esquerda */}
+              <div className="flex flex-col justify-around flex-none w-4">
+                {[0,1].map(i => (
+                  <div key={i} className={`flex-1 border-r border-t border-b border-[#00ffb2]/15 rounded-r-lg ${i % 2 === 0 ? "border-b-0 rounded-br-none" : "border-t-0 rounded-tr-none"}`} />
+                ))}
+              </div>
+
+              {/* COL 4: Semi esquerda + Final + Semi direita */}
+              <div className="flex flex-col flex-1 justify-between items-center gap-2 min-w-[150px]">
+                <div className="w-full flex justify-start">{node(BRACKET.semi_left.match, BRACKET.semi_left.home, BRACKET.semi_left.away)}</div>
+
+                <div className="flex flex-col items-center gap-1">
+                  <p className="text-[10px] text-[#ffd700] font-bold uppercase tracking-widest">🏆 Final</p>
+                  {node(BRACKET.final.match, BRACKET.final.home, BRACKET.final.away)}
+                  <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-1">3º lugar</p>
+                  {node(BRACKET.terceiro.match, BRACKET.terceiro.home, BRACKET.terceiro.away)}
+                </div>
+
+                <div className="w-full flex justify-end">{node(BRACKET.semi_right.match, BRACKET.semi_right.home, BRACKET.semi_right.away)}</div>
+              </div>
+
+              {/* Conectores semi → quartas direita */}
+              <div className="flex flex-col justify-around flex-none w-4">
+                {[0,1].map(i => (
+                  <div key={i} className={`flex-1 border-l border-t border-b border-[#00ffb2]/15 rounded-l-lg ${i % 2 === 0 ? "border-b-0 rounded-bl-none" : "border-t-0 rounded-tl-none"}`} />
+                ))}
+              </div>
+
+              {/* COL 6: Quartas direita */}
+              <div className="flex flex-col justify-around gap-1 flex-none" style={{paddingTop: '5rem', paddingBottom: '5rem'}}>
+                {BRACKET.quartas_right.map(({ match, home, away }) => (
+                  <div key={match}>{node(match, home, away)}</div>
+                ))}
+              </div>
+
+              {/* Conectores quartas → oitavas direita */}
+              <div className="flex flex-col justify-around flex-none w-4">
+                {[0,1,2,3].map(i => (
+                  <div key={i} className={`flex-1 border-l border-t border-b border-[#00ffb2]/15 rounded-l-lg ${i % 2 === 0 ? "border-b-0 rounded-bl-none" : "border-t-0 rounded-tl-none"}`} />
+                ))}
+              </div>
+
+              {/* COL 7: Oitavas direita */}
+              <div className="flex flex-col justify-around gap-1 flex-none" style={{paddingTop: '2.5rem', paddingBottom: '2.5rem'}}>
+                {BRACKET.oitavas_right.map(({ match, home, away }) => (
+                  <div key={match}>{node(match, home, away)}</div>
+                ))}
+              </div>
+
+              {/* Conectores oitavas → 32-avos direita */}
+              <div className="flex flex-col justify-around flex-none w-4">
+                {[0,1,2,3,4,5,6,7].map(i => (
+                  <div key={i} className={`flex-1 border-l border-t border-b border-[#00ffb2]/15 rounded-l-lg ${i % 2 === 0 ? "border-b-0 rounded-bl-none" : "border-t-0 rounded-tl-none"}`} />
+                ))}
+              </div>
+
+              {/* COL 8: 32-avos direita */}
+              <div className="flex flex-col justify-around gap-1 flex-none">
+                {BRACKET.right.map(({ match, home, away }) => (
+                  <div key={match}>{node(match, home, away)}</div>
+                ))}
+              </div>
+
+            </div>
           </div>
         </div>
 
-        <div className="space-y-8">
-          {loadingData ? (
-            <div className="rounded-3xl border border-[#00ffb2]/20 bg-slate-950/90 p-10 text-center text-[#00b2ff]">
-              <p>Carregando partidas do mata-mata...</p>
-            </div>
-          ) : !groupStageFinished ? (
-            <div className="rounded-3xl border border-[#00ffb2]/20 bg-slate-950/90 p-10 text-center text-white">
-              <h2 className="text-2xl font-semibold text-white">🔒 Mata-mata bloqueado</h2>
-              <p className="mt-4 text-slate-300">
-                Os palpites do mata-mata serão liberados após o admin finalizar todos os jogos da fase de grupos.
-              </p>
-            </div>
-          ) : groupedByPhase.length === 0 ? (
-            <div className="rounded-3xl border border-[#00ffb2]/20 bg-slate-950/90 p-8 text-center text-slate-400">
-              Nenhuma partida do mata-mata disponível.
-            </div>
-          ) : (
-            groupedByPhase.map((group) => (
-              <section key={group.phase} className="rounded-3xl border border-[#00ffb2]/20 bg-[#081116]/90 p-6">
-                <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.35em] text-[#00ffb2]">{group.title}</p>
-                    <p className="text-lg font-semibold text-white">{group.matches.length} partidas</p>
-                  </div>
-                  <span className="rounded-full bg-[#00ffb2]/10 px-3 py-1 text-xs text-[#00ffb2]">{group.title}</span>
-                </div>
-                <div className="space-y-4">
-                  {group.matches.map((match) => {
-                    const prediction = predictions[match.id];
-                    const locked = isPredictionLocked(getMatchKickoffAt(match), predictionsOpen);
-                    return (
-                      <MatchCard
-                        key={`${match.id}-${prediction?.predicted_home ?? ""}-${prediction?.predicted_away ?? ""}`}
-                        match={match}
-                        homeTeam={match.home_team_info ?? undefined}
-                        awayTeam={match.away_team_info ?? undefined}
-                        isEditable={!locked}
-                        locked={locked}
-                        disabled={savingMatchId === match.id}
-                        lockMessage={locked ? "Palpites encerrados" : undefined}
-                        predictedHome={prediction?.predicted_home}
-                        predictedAway={prediction?.predicted_away}
-                        predictedWinner={(prediction as any)?.predicted_winner}
-                        predictedPenalties={(prediction as any)?.predicted_penalties}
-                        predictedMethod={(prediction as any)?.predicted_method}
-                        predictionUpdatedAt={prediction?.updated_at}
-                        onPrediction={(homeScore, awayScore, winner, penalties, method) => {
-                          setPendingScores((prev) => ({ ...prev, [match.id]: { home: homeScore, away: awayScore, winner, penalties, method } }));
-                        }}
-                        onConfirm={() => {
-                          const p = pendingScores[match.id];
-                          if (p) {
-                            void handleSavePrediction(match.id, p.home, p.away, p.winner, p.penalties, p.method);
-                          } else if (prediction) {
-                            void handleSavePrediction(match.id, prediction.predicted_home, prediction.predicted_away);
-                          }
-                        }}
-                      />
-                    );
-                  })}
-                </div>
-              </section>
-            ))
-          )}
-        </div>
       </div>
     </main>
   );
