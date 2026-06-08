@@ -161,11 +161,14 @@ export default function MataMataPage() {
             <div className="rounded-3xl border border-[#00ffb2]/20 bg-slate-950/90 p-10 text-center text-[#00b2ff]">
               <p>Carregando partidas do mata-mata...</p>
             </div>
-          ) : groupStageFinished === false && !predictionsOpen ? (
+          ) : !groupStageFinished && new Date() < new Date("2026-06-28T00:00:00Z") ? (
             <div className="rounded-3xl border border-[#00ffb2]/20 bg-slate-950/90 p-10 text-center text-white">
-              <h2 className="text-2xl font-semibold text-white">Mata-mata bloqueado</h2>
+              <h2 className="text-2xl font-semibold text-white">🔒 Mata-mata bloqueado</h2>
               <p className="mt-4 text-slate-300">
-                O mata-mata será liberado após o encerramento da fase de grupos.
+                Os palpites do mata-mata serão liberados após o encerramento da fase de grupos.
+              </p>
+              <p className="mt-2 text-sm text-[#00ffb2]">
+                Disponível a partir de 28 de junho de 2026.
               </p>
             </div>
           ) : groupedByPhase.length === 0 ? (
