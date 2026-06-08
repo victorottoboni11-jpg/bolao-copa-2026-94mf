@@ -17,7 +17,7 @@ export async function getPreCopaPrediction(userId: string): Promise<PreCopaPredi
   return data || null;
 }
 
-export function getPreCopaLockDateFromMatchStart(matchDate?: string | null, minutesBefore = 5): string | null {
+export function getPreCopaLockDateFromMatchStart(matchDate?: string | null, minutesBefore = 30): string | null {
   if (!matchDate) {
     return null;
   }
