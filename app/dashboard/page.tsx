@@ -126,8 +126,8 @@ export default function DashboardPage() {
         {/* HEADER */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-black text-white">Dashboard</h1>
-            <p className="text-gray-400 mt-2">Bem-vindo ao Bolão 2026</p>
+            <h1 className="text-4xl font-black text-white">Palpites</h1>
+            <p className="text-gray-400 mt-2">Bem-vindo ao Bolão 94 M&F Copa 2026</p>
           </div>
           <div className="flex items-center gap-3">
             <div className="px-4 py-2 rounded-xl border border-[#00ffb244] bg-[#081120]">
@@ -149,10 +149,7 @@ export default function DashboardPage() {
             <h2 className="text-xl font-bold mb-2 text-[#00ffb2]">Mata-Mata</h2>
             <p className="text-gray-400">Faça seus palpites eliminatórios.</p>
           </Link>
-          <Link href="/chaveamento" className="rounded-2xl border border-[#00ffb233] bg-[#050816] p-6 hover:border-[#00ffb2]">
-            <h2 className="text-xl font-bold mb-2 text-[#00ffb2]">Chaveamento</h2>
-            <p className="text-gray-400">Veja a chave completa do mata-mata.</p>
-          </Link>
+
           <Link href="/pre-copa" className="rounded-2xl border border-[#00ffb233] bg-[#050816] p-6 hover:border-[#00ffb2]">
             <h2 className="text-xl font-bold mb-2 text-[#00ffb2]">Pré-Copa</h2>
             <p className="text-gray-400">Palpites especiais do torneio.</p>
