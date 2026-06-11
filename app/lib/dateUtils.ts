@@ -56,10 +56,15 @@ export function isMatchLocked(kickoffAt?: string | null): boolean {
   const date = parseKickoffAt(kickoffAt);
   if (!date) return false;
 
-  const now = new Date();
-  const cutoffTime = new Date(date.getTime() - LOCK_MINUTES_BEFORE * 60 * 1000);
+  // O banco armazena horários de Brasília como se fossem UTC (sem offset).
+  // Ex: 16:00 Brasília está salvo como 16:00 UTC.
+  // Para comparar corretamente, somamos 3h ao horário armazenado
+  // para obter o instante UTC real do início da partida.
+  const BRASILIA_OFFSET_MS = 3 * 60 * 60 * 1000; // UTC-3 -> +3h
+  const realKickoffUTC = new Date(date.getTime() + BRASILIA_OFFSET_MS);
+  const cutoffTime = new Date(realKickoffUTC.getTime() - LOCK_MINUTES_BEFORE * 60 * 1000);
 
-  return now >= cutoffTime;
+  return new Date() >= cutoffTime;
 }
 
 /**
