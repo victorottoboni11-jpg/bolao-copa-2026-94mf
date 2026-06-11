@@ -68,31 +68,41 @@ export async function savePreCopaPrediction(
   userId: string,
   values: Omit<PreCopaPrediction, "id" | "user_id" | "created_at" | "updated_at" | "points">
 ): Promise<PreCopaPrediction | null> {
-  const { data, error } = await supabase
-    .from("pre_copa_predictions")
-    .upsert(
-      [
-        {
-          user_id: userId,
-          champion_team: values.champion_team,
-          runner_up_team: values.runner_up_team,
-          top_scorer_player: values.top_scorer_player,
-          top_scorer_goals: values.top_scorer_goals,
-          best_goalkeeper_player: values.best_goalkeeper_player,
-          best_player: values.best_player,
-          tournament_revelation: values.tournament_revelation,
-          updated_at: new Date().toISOString(),
-        },
-      ],
-      { onConflict: "user_id" }
-    )
-    .select("*")
-    .single();
+  try {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) {
+      console.error("Sessão não disponível para salvar pré-copa");
+      return null;
+    }
 
-  if (error) {
+    const res = await fetch("/api/pre-copa-predictions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        champion_team: values.champion_team,
+        runner_up_team: values.runner_up_team,
+        top_scorer_player: values.top_scorer_player,
+        top_scorer_goals: values.top_scorer_goals,
+        best_goalkeeper_player: values.best_goalkeeper_player,
+        best_player: values.best_player,
+        tournament_revelation: values.tournament_revelation,
+      }),
+    });
+
+    const payload = await res.json().catch(() => null);
+
+    if (!res.ok) {
+      console.error("Erro ao salvar pré-copa via API:", payload?.error);
+      return null;
+    }
+
+    return payload?.prediction ?? null;
+  } catch (error) {
     console.error("Erro ao salvar palpite pré-copa:", error);
     return null;
   }
-
-  return data || null;
 }
