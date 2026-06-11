@@ -13,13 +13,7 @@ const LOCK_MINUTES_BEFORE = 30;
  */
 export function parseKickoffAt(kickoffAt?: string | null): Date | null {
   if (!kickoffAt) return null;
-  // Banco usa timestamp without timezone com valores em horário de Brasília
-  // Ex: "2026-06-11T16:00:00" significa 16:00 Brasília
-  // Adicionamos -03:00 para que o JS interprete corretamente como Brasília
-  const withOffset = kickoffAt.endsWith("Z") || kickoffAt.includes("+") || /[+-]\d{2}:\d{2}$/.test(kickoffAt)
-    ? kickoffAt
-    : kickoffAt + "-03:00";
-  const parsed = new Date(withOffset);
+  const parsed = new Date(kickoffAt);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
@@ -36,7 +30,7 @@ export function formatBrazilTime(
   if (!date) return style === "time" ? "--:--" : "Data indefinida";
 
   const opts: Intl.DateTimeFormatOptions = {
-    timeZone: "UTC",
+    timeZone: "America/Sao_Paulo",
   };
 
   if (style === "full" || style === "date") {
