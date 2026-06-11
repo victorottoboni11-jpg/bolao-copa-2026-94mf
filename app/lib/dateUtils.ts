@@ -56,14 +56,9 @@ export function isMatchLocked(kickoffAt?: string | null): boolean {
   const date = parseKickoffAt(kickoffAt);
   if (!date) return false;
 
-  // O banco armazena horários de Brasília como se fossem UTC (sem offset).
-  // Ex: 16:00 Brasília está salvo como 16:00 UTC.
-  // Para comparar corretamente, somamos 3h ao horário armazenado
-  // para obter o instante UTC real do início da partida.
-  const BRASILIA_OFFSET_MS = 3 * 60 * 60 * 1000; // UTC-3 -> +3h
-  const realKickoffUTC = new Date(date.getTime() + BRASILIA_OFFSET_MS);
-  const cutoffTime = new Date(realKickoffUTC.getTime() - LOCK_MINUTES_BEFORE * 60 * 1000);
-
+  // kickoff_at está em timestamp without timezone (horário de Brasília literal)
+  // Comparamos diretamente com o horário local do browser/servidor
+  const cutoffTime = new Date(date.getTime() - LOCK_MINUTES_BEFORE * 60 * 1000);
   return new Date() >= cutoffTime;
 }
 
@@ -75,10 +70,7 @@ export function isMatchLocked(kickoffAt?: string | null): boolean {
 export function isUpcomingMatch(kickoffAt?: string | null): boolean {
   const date = parseKickoffAt(kickoffAt);
   if (!date) return false;
-
-  const BRASILIA_OFFSET_MS = 3 * 60 * 60 * 1000;
-  const realKickoffUTC = new Date(date.getTime() + BRASILIA_OFFSET_MS);
-  return realKickoffUTC > new Date();
+  return date > new Date();
 }
 
 /**
@@ -96,9 +88,7 @@ export function isPastMatch(kickoffAt?: string | null): boolean {
 export function isMatchStarted(kickoffAt?: string | null): boolean {
   const date = parseKickoffAt(kickoffAt);
   if (!date) return false;
-  const BRASILIA_OFFSET_MS = 3 * 60 * 60 * 1000;
-  const realKickoffUTC = new Date(date.getTime() + BRASILIA_OFFSET_MS);
-  return new Date() >= realKickoffUTC;
+  return new Date() >= date;
 }
 
 /**
@@ -108,9 +98,7 @@ export function isMatchStarted(kickoffAt?: string | null): boolean {
 export function minutesUntilKickoff(kickoffAt?: string | null): number {
   const date = parseKickoffAt(kickoffAt);
   if (!date) return 0;
-  const BRASILIA_OFFSET_MS = 3 * 60 * 60 * 1000;
-  const realKickoffUTC = new Date(date.getTime() + BRASILIA_OFFSET_MS);
-  return Math.round((realKickoffUTC.getTime() - new Date().getTime()) / 60000);
+  return Math.round((date.getTime() - new Date().getTime()) / 60000);
 }
 
 /**
