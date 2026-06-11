@@ -76,9 +76,9 @@ export function isUpcomingMatch(kickoffAt?: string | null): boolean {
   const date = parseKickoffAt(kickoffAt);
   if (!date) return false;
 
-  const now = new Date();
-
-  return date > now;
+  const BRASILIA_OFFSET_MS = 3 * 60 * 60 * 1000;
+  const realKickoffUTC = new Date(date.getTime() + BRASILIA_OFFSET_MS);
+  return realKickoffUTC > new Date();
 }
 
 /**
@@ -96,7 +96,9 @@ export function isPastMatch(kickoffAt?: string | null): boolean {
 export function isMatchStarted(kickoffAt?: string | null): boolean {
   const date = parseKickoffAt(kickoffAt);
   if (!date) return false;
-  return new Date() >= date;
+  const BRASILIA_OFFSET_MS = 3 * 60 * 60 * 1000;
+  const realKickoffUTC = new Date(date.getTime() + BRASILIA_OFFSET_MS);
+  return new Date() >= realKickoffUTC;
 }
 
 /**
@@ -106,7 +108,9 @@ export function isMatchStarted(kickoffAt?: string | null): boolean {
 export function minutesUntilKickoff(kickoffAt?: string | null): number {
   const date = parseKickoffAt(kickoffAt);
   if (!date) return 0;
-  return Math.round((date.getTime() - new Date().getTime()) / 60000);
+  const BRASILIA_OFFSET_MS = 3 * 60 * 60 * 1000;
+  const realKickoffUTC = new Date(date.getTime() + BRASILIA_OFFSET_MS);
+  return Math.round((realKickoffUTC.getTime() - new Date().getTime()) / 60000);
 }
 
 /**
