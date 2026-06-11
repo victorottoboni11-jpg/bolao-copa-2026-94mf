@@ -110,14 +110,24 @@ export type PreCopaPrediction = {
   user_id: string;
   champion_team: string;
   runner_up_team: string;
-  top_scorer_player: string;
-  top_scorer_goals: number;
-  best_goalkeeper_player: string;
   best_player: string;
-  tournament_revelation: string;
-  points: number;
+  // Campos do frontend
+  top_scorer_player?: string;
+  top_scorer_goals?: number;
+  best_goalkeeper_player?: string;
+  tournament_revelation?: string;
+  // Campos reais do banco
+  top_scorer?: string;
+  predicted_total_goals?: number;
+  best_goalkeeper?: string;
+  best_young?: string;
+  golden_ball?: string;
+  best_assist?: string;
+  fair_play_team?: string;
+  pre_copa_points?: number;
+  is_locked?: boolean;
+  points?: number;
   created_at?: string;
-  updated_at?: string;
 };
 
 export type PreCopaResult = {
