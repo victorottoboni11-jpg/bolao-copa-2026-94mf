@@ -13,8 +13,17 @@ const LOCK_MINUTES_BEFORE = 30;
  */
 export function parseKickoffAt(kickoffAt?: string | null): Date | null {
   if (!kickoffAt) return null;
-  const parsed = new Date(kickoffAt);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
+  // O banco retorna timestamp without timezone (ex: "2026-06-11T16:00:00")
+  // JavaScript interpreta strings sem offset como horário LOCAL do browser.
+  // Como os horários estão em Brasília (UTC-3), o browser somaria 3h.
+  // Forçamos leitura como UTC adicionando Z, depois subtraímos 3h
+  // para obter o instante UTC real correspondente ao horário de Brasília.
+  const normalized = kickoffAt.endsWith("Z") || kickoffAt.includes("+") ? kickoffAt : kickoffAt + "Z";
+  const parsed = new Date(normalized);
+  if (Number.isNaN(parsed.getTime())) return null;
+  // Subtrair 3h: 16:00 UTC -> 13:00 UTC (real), mas queremos tratar 16:00 como Brasília
+  // então subtraímos 3h para que comparações com Date.now() (UTC) funcionem
+  return new Date(parsed.getTime() - 3 * 60 * 60 * 1000);
 }
 
 /**
