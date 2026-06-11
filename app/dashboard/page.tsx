@@ -23,13 +23,11 @@ function isLocked(kickoffAt?: string) {
 function getNext24hMatches(matches: Match[]): Match[] {
   const now = Date.now();
   const in24h = now + 24 * 60 * 60 * 1000;
-  // Horários no banco estão em Brasília armazenados como UTC — somar 3h para comparar corretamente
-  const BRASILIA_OFFSET_MS = 3 * 60 * 60 * 1000;
 
   return matches
     .filter((m) => {
       if (!m.kickoff_at) return false;
-      const t = new Date(m.kickoff_at).getTime() + BRASILIA_OFFSET_MS;
+      const t = new Date(m.kickoff_at).getTime();
       const cutoff = t - LOCK_MINUTES * 60 * 1000;
       return cutoff > now && t <= in24h;
     })
