@@ -6,7 +6,7 @@ import { useAuth } from "@/app/lib/auth";
 import { getPreCopaPrediction, savePreCopaPrediction } from "@/app/lib/preCopa";
 import { PreCopaForm } from "@/app/components/PreCopaForm";
 import { Toast } from "@/app/components/Toast";
-import type { PreCopaPrediction } from "@/app/types";
+import type { PreCopaPrediction } from "@/app/types";`n`nconst PRE_COPA_LOCKED = true;
 
 export default function PreCopaPage() {
   const { user, loading } = useAuth();
@@ -16,7 +16,7 @@ export default function PreCopaPage() {
   const [toast, setToast] = useState<{ type: "success" | "error" | "info"; message: string } | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) return;`n    if (PRE_COPA_LOCKED) {`n      setToast({ type: "error", message: "Os palpites Pré-Copa foram encerrados." });`n      return;`n    }
 
     const loadData = async () => {
       setLoadingData(true);
@@ -34,7 +34,7 @@ export default function PreCopaPage() {
   }, [user]);
 
   const handleSave = async (values: Parameters<typeof savePreCopaPrediction>[1]) => {
-    if (!user) return;
+    if (!user) return;`n    if (PRE_COPA_LOCKED) {`n      setToast({ type: "error", message: "Os palpites Pré-Copa foram encerrados." });`n      return;`n    }
     setIsSaving(true);
     try {
       const saved = await savePreCopaPrediction(user.id, values);
