@@ -45,6 +45,8 @@ export default function DashboardPage() {
   const [saving, setSaving] = useState<Record<string, boolean>>({});
   const [saved, setSaved] = useState<Record<string, boolean>>({});
   const [showPalpites, setShowPalpites] = useState(false);
+  const [allPredictions, setAllPredictions] = useState<any[]>([]);
+  const [topRanking, setTopRanking] = useState<any[]>([]);
 
   useEffect(() => {
     async function loadData() {
@@ -61,6 +63,31 @@ export default function DashboardPage() {
         .order("kickoff_at", { ascending: true });
 
       setMatches(matchesData || []);
+
+      // Buscar todas as predictions para estatísticas
+      const { data: allPreds } = await supabase
+        .from("predictions")
+        .select("match_id, predicted_home, predicted_away, points, user_id");
+      setAllPredictions(allPreds || []);
+
+      // Buscar ranking top 3
+      const { data: rankData } = await supabase
+        .from("rankings")
+        .select("user_id, total_points, exact_scores, position")
+        .order("total_points", { ascending: false })
+        .limit(3);
+      const userIds = (rankData || []).map((r: any) => r.user_id);
+      if (userIds.length > 0) {
+        const { data: usersData } = await supabase
+          .from("users")
+          .select("id, full_name, email")
+          .in("id", userIds);
+        const usersMap = Object.fromEntries((usersData || []).map((u: any) => [u.id, u]));
+        setTopRanking((rankData || []).map((r: any) => ({
+          ...r,
+          name: usersMap[r.user_id]?.full_name || usersMap[r.user_id]?.email || "—",
+        })));
+      }
 
       const { data: predictionsData } = await supabase
         .from("predictions")
@@ -94,6 +121,51 @@ export default function DashboardPage() {
   }, [predictions, matches]);
 
   const upcomingMatches = useMemo(() => getNext24hMatches(matches), [matches]);
+
+  const stats = useMemo(() => {
+    const finishedMatches = matches.filter(m => m.is_finished && m.home_score !== null);
+    if (finishedMatches.length === 0 || allPredictions.length === 0) return null;
+
+    // Jogo com mais cravadas
+    const exactsByMatch: Record<string, { count: number; match: any }> = {};
+    allPredictions.forEach(p => {
+      const m = finishedMatches.find(m => m.id === p.match_id);
+      if (!m) return;
+      if (!exactsByMatch[p.match_id]) exactsByMatch[p.match_id] = { count: 0, match: m };
+      if (p.predicted_home === m.home_score && p.predicted_away === m.away_score) {
+        exactsByMatch[p.match_id].count++;
+      }
+    });
+    const mostExacts = Object.values(exactsByMatch).sort((a, b) => b.count - a.count)[0];
+
+    // Jogo mais zebra (menos cravadas ou menos pontos totais)
+    const leastExacts = Object.values(exactsByMatch)
+      .filter(e => e.count === 0 || (allPredictions.filter(p => p.match_id === e.match.id).length > 0))
+      .sort((a, b) => a.count - b.count)[0];
+
+    // Placar mais apostado
+    const scoreCounts: Record<string, number> = {};
+    allPredictions.forEach(p => {
+      const key = \`\${p.predicted_home}x\${p.predicted_away}\`;
+      scoreCounts[key] = (scoreCounts[key] || 0) + 1;
+    });
+    const topScore = Object.entries(scoreCounts).sort((a, b) => b[1] - a[1])[0];
+
+    // Top 3 cravadores
+    const exactsByUser: Record<string, number> = {};
+    allPredictions.forEach(p => {
+      const m = finishedMatches.find(m => m.id === p.match_id);
+      if (!m) return;
+      if (p.predicted_home === m.home_score && p.predicted_away === m.away_score) {
+        exactsByUser[p.user_id] = (exactsByUser[p.user_id] || 0) + 1;
+      }
+    });
+    const topCravadores = Object.entries(exactsByUser)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3);
+
+    return { mostExacts, leastExacts, topScore, topCravadores, finishedCount: finishedMatches.length };
+  }, [matches, allPredictions]);
 
   const handleSave = async (matchId: string) => {
     if (!user) return;
@@ -182,6 +254,86 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* ESTATÍSTICAS DA RODADA */}
+        {stats && stats.finishedCount > 0 && (
+          <div className="rounded-3xl border border-[#00ffb233] bg-[#050816] p-6">
+            <h2 className="text-2xl font-bold text-[#00ffb2] mb-6">Estatísticas do Bolão</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+              {/* Top 3 Ranking */}
+              <div className="rounded-xl border border-[#00ffb2]/20 bg-[#081116] p-4">
+                <p className="text-xs text-[#00ffb2] font-semibold uppercase tracking-wider mb-3">🏆 Top 3 Ranking</p>
+                <div className="space-y-2">
+                  {topRanking.map((r, i) => (
+                    <div key={r.user_id} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"}</span>
+                        <span className="text-sm text-white truncate max-w-[120px]">{r.name}</span>
+                      </div>
+                      <span className="text-sm font-bold text-[#00ffb2]">{r.total_points} pts</span>
+                    </div>
+                  ))}
+                  {topRanking.length === 0 && <p className="text-xs text-gray-500">Nenhum dado ainda</p>}
+                </div>
+              </div>
+
+              {/* Top 3 Cravadores */}
+              <div className="rounded-xl border border-[#00ffb2]/20 bg-[#081116] p-4">
+                <p className="text-xs text-[#00ffb2] font-semibold uppercase tracking-wider mb-3">💎 Maiores Cravadores</p>
+                <div className="space-y-2">
+                  {stats.topCravadores.length === 0 && <p className="text-xs text-gray-500">Nenhuma cravada ainda</p>}
+                  {stats.topCravadores.map(([userId, count], i) => {
+                    const rankUser = topRanking.find(r => r.user_id === userId);
+                    return (
+                      <div key={userId} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">{i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"}</span>
+                          <span className="text-sm text-white truncate max-w-[120px]">{rankUser?.name || "—"}</span>
+                        </div>
+                        <span className="text-sm font-bold text-[#00ffb2]">{count} 💎</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Placar mais apostado */}
+              <div className="rounded-xl border border-[#00ffb2]/20 bg-[#081116] p-4">
+                <p className="text-xs text-[#00ffb2] font-semibold uppercase tracking-wider mb-3">⚽ Placar Mais Apostado</p>
+                {stats.topScore ? (
+                  <div className="text-center">
+                    <p className="text-3xl font-black text-white mt-2">{stats.topScore[0]}</p>
+                    <p className="text-sm text-gray-400 mt-1">{stats.topScore[1]} palpites</p>
+                  </div>
+                ) : <p className="text-xs text-gray-500">Nenhum dado ainda</p>}
+              </div>
+
+              {/* Jogo com mais cravadas */}
+              {stats.mostExacts && (
+                <div className="rounded-xl border border-[#00ffb2]/20 bg-[#081116] p-4">
+                  <p className="text-xs text-[#00ffb2] font-semibold uppercase tracking-wider mb-3">🎯 Jogo com Mais Cravadas</p>
+                  <p className="text-sm text-white">
+                    {(stats.mostExacts.match as any).home_team_info?.name} {stats.mostExacts.match.home_score} x {stats.mostExacts.match.away_score} {(stats.mostExacts.match as any).away_team_info?.name}
+                  </p>
+                  <p className="text-xs text-[#00ffb2] mt-1">{stats.mostExacts.count} cravadas</p>
+                </div>
+              )}
+
+              {/* Jogo mais zebra */}
+              {stats.leastExacts && stats.leastExacts.count === 0 && (
+                <div className="rounded-xl border border-red-500/20 bg-[#0a0505] p-4">
+                  <p className="text-xs text-red-400 font-semibold uppercase tracking-wider mb-3">🦓 Maior Zebra</p>
+                  <p className="text-sm text-white">
+                    {(stats.leastExacts.match as any).home_team_info?.name} {stats.leastExacts.match.home_score} x {stats.leastExacts.match.away_score} {(stats.leastExacts.match as any).away_team_info?.name}
+                  </p>
+                  <p className="text-xs text-red-400 mt-1">Ninguém cravou!</p>
+                </div>
+              )}
+
+            </div>
+          </div>
+        )}
 
         {/* PALPITES SALVOS */}
         <div className="rounded-3xl border border-[#00ffb233] bg-[#050816] p-6">
