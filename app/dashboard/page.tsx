@@ -146,7 +146,7 @@ export default function DashboardPage() {
     // Placar mais apostado
     const scoreCounts: Record<string, number> = {};
     allPredictions.forEach(p => {
-      const key = \`\${p.predicted_home}x\${p.predicted_away}\`;
+      const key = String(p.predicted_home) + "x" + String(p.predicted_away);
       scoreCounts[key] = (scoreCounts[key] || 0) + 1;
     });
     const topScore = Object.entries(scoreCounts).sort((a, b) => b[1] - a[1])[0];
