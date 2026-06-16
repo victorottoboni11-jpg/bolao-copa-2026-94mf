@@ -44,6 +44,7 @@ export default function DashboardPage() {
   const [scores, setScores] = useState<Record<string, [number, number]>>({});
   const [saving, setSaving] = useState<Record<string, boolean>>({});
   const [saved, setSaved] = useState<Record<string, boolean>>({});
+  const [showPalpites, setShowPalpites] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -180,6 +181,80 @@ export default function DashboardPage() {
               <p className="mt-2 text-2xl font-semibold">{totalPoints}</p>
             </div>
           </div>
+        </div>
+
+        {/* PALPITES SALVOS */}
+        <div className="rounded-3xl border border-[#00ffb233] bg-[#050816] p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold text-[#00ffb2]">Meus Palpites</h2>
+            <button
+              onClick={() => setShowPalpites(!showPalpites)}
+              className="px-4 py-2 rounded-xl border border-[#00ffb233] text-[#00ffb2] text-sm hover:bg-[#00ffb2]/10 transition"
+            >
+              {showPalpites ? "Ocultar" : "Ver todos"}
+            </button>
+          </div>
+
+          {showPalpites && (
+            <div className="space-y-2 max-h-[500px] overflow-y-auto">
+              {predictions.length === 0 ? (
+                <p className="text-gray-400 text-center py-4">Nenhum palpite salvo ainda.</p>
+              ) : (
+                [...predictions]
+                  .sort((a, b) => {
+                    const ma = matches.find(m => m.id === a.match_id);
+                    const mb = matches.find(m => m.id === b.match_id);
+                    return new Date(ma?.kickoff_at ?? 0).getTime() - new Date(mb?.kickoff_at ?? 0).getTime();
+                  })
+                  .map((pred) => {
+                    const match = matches.find(m => m.id === pred.match_id);
+                    if (!match) return null;
+                    const home = (match as any).home_team_info;
+                    const away = (match as any).away_team_info;
+                    const finished = match.is_finished;
+                    const correct = finished && match.home_score !== null && (
+                      pred.predicted_home === match.home_score && pred.predicted_away === match.away_score
+                        ? "cravada"
+                        : (() => {
+                            const ar = (match.home_score ?? 0) > (match.away_score ?? 0) ? "h" : (match.away_score ?? 0) > (match.home_score ?? 0) ? "a" : "d";
+                            const pr = pred.predicted_home > pred.predicted_away ? "h" : pred.predicted_away > pred.predicted_home ? "a" : "d";
+                            return ar === pr ? "acerto" : "erro";
+                          })()
+                    );
+                    return (
+                      <div key={pred.id} className={`flex items-center justify-between px-4 py-3 rounded-xl border ${
+                        correct === "cravada" ? "border-[#00ffb2]/40 bg-[#00ffb2]/5" :
+                        correct === "acerto" ? "border-yellow-500/30 bg-yellow-500/5" :
+                        correct === "erro" ? "border-red-500/20 bg-red-500/5" :
+                        "border-[#ffffff10] bg-[#081116]"
+                      }`}>
+                        <div className="flex items-center gap-3 min-w-0">
+                          {home?.flag_url && <img src={home.flag_url} alt="" className="w-6 h-4 rounded object-cover" />}
+                          <span className="text-xs text-gray-400 truncate">{home?.name ?? "?"}</span>
+                        </div>
+                        <div className="flex items-center gap-2 mx-3 flex-none">
+                          <span className={`font-bold text-sm ${correct === "cravada" ? "text-[#00ffb2]" : "text-white"}`}>
+                            {pred.predicted_home} x {pred.predicted_away}
+                          </span>
+                          {finished && (
+                            <span className="text-xs text-gray-500">
+                              ({match.home_score} x {match.away_score})
+                            </span>
+                          )}
+                          {correct === "cravada" && <span className="text-xs text-[#00ffb2]">💎 +{pred.points}pts</span>}
+                          {correct === "acerto" && <span className="text-xs text-yellow-400">✓ +{pred.points}pts</span>}
+                          {correct === "erro" && <span className="text-xs text-red-400">✗ 0pts</span>}
+                        </div>
+                        <div className="flex items-center gap-3 min-w-0 justify-end">
+                          <span className="text-xs text-gray-400 truncate">{away?.name ?? "?"}</span>
+                          {away?.flag_url && <img src={away.flag_url} alt="" className="w-6 h-4 rounded object-cover" />}
+                        </div>
+                      </div>
+                    );
+                  })
+              )}
+            </div>
+          )}
         </div>
 
         {/* PRÓXIMOS JOGOS COM PALPITE INLINE */}
