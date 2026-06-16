@@ -167,6 +167,10 @@ export default function FaseDeGruposPage() {
                   predictedAway={prediction?.predicted_away}
                   predictionUpdatedAt={prediction?.updated_at}
                   onPrediction={(homeScore, awayScore) => void handleSavePrediction(match.id, homeScore, awayScore)}
+                  onConfirm={() => {
+                    const pred = predictions[match.id];
+                    void handleSavePrediction(match.id, pred?.predicted_home ?? 0, pred?.predicted_away ?? 0);
+                  }}
                 />
               );
             })
