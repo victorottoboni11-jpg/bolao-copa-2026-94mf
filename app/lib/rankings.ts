@@ -69,7 +69,7 @@ async function calculateRankingFromPredictions(client: SupabaseClient): Promise<
     client.from("predictions").select("*"),
     client.from("matches").select("id, home_score, away_score, phase, group_name, winner, winner_type"),
     client.from("users").select("id, full_name, email"),
-    client.from("pre_copa_predictions").select("user_id, points"),
+    client.from("pre_copa_predictions").select("user_id, pre_copa_points"),
   ]);
 
   const predictions = predictionsData || [];
@@ -87,8 +87,8 @@ async function calculateRankingFromPredictions(client: SupabaseClient): Promise<
   // Mapa de pontos pré-copa por usuário
   const preCopaPointsMap = new Map<string, number>();
   (preCopaData || []).forEach((pc: any) => {
-    if (pc.user_id && typeof pc.points === "number") {
-      preCopaPointsMap.set(pc.user_id, pc.points);
+    if (pc.user_id && typeof pc.pre_copa_points === "number") {
+      preCopaPointsMap.set(pc.user_id, pc.pre_copa_points);
     }
   });
 
