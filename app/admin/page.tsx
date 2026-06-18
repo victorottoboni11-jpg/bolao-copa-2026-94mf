@@ -165,7 +165,14 @@ export default function AdminPage() {
   const handleRecalculateRanking = async () => {
     setProcessing(true);
     try {
-      await recalculateRankings();
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      const res = await fetch("/api/admin/recalculate-rankings", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const payload = await res.json();
+      if (!res.ok) throw new Error(payload?.error || "Falha ao recalcular");
       showToast("success", "Ranking recalculado com sucesso.");
     } catch (error) {
       console.error(error);
