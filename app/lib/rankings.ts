@@ -65,11 +65,30 @@ export async function recalculateRankings(db?: SupabaseClient): Promise<RankingE
 }
 
 async function calculateRankingFromPredictions(client: SupabaseClient): Promise<RankingEntry[]> {
-  const [{ data: predictionsData }, { data: matchesData }, { data: usersData }, { data: preCopaData }] = await Promise.all([
-    client.from("predictions").select("*"),
-    client.from("matches").select("id, home_score, away_score, phase, group_name, winner, winner_type"),
-    client.from("users").select("id, full_name, email"),
-    client.from("pre_copa_predictions").select("user_id, pre_copa_points"),
+  // Buscar TODAS as predictions com paginação (Supabase limita a 1000 linhas por padrão)
+  async function fetchAllRows(table: string, select: string) {
+    const allRows: any[] = [];
+    let from = 0;
+    const pageSize = 1000;
+    while (true) {
+      const { data, error } = await client.from(table).select(select).range(from, from + pageSize - 1);
+      if (error) {
+        console.error(`Erro ao buscar ${table}:`, error);
+        break;
+      }
+      if (!data || data.length === 0) break;
+      allRows.push(...data);
+      if (data.length < pageSize) break;
+      from += pageSize;
+    }
+    return allRows;
+  }
+
+  const [predictionsData, matchesData, usersData, preCopaData] = await Promise.all([
+    fetchAllRows("predictions", "*"),
+    fetchAllRows("matches", "id, home_score, away_score, phase, group_name, winner, winner_type"),
+    fetchAllRows("users", "id, full_name, email"),
+    fetchAllRows("pre_copa_predictions", "user_id, pre_copa_points"),
   ]);
 
   const predictions = predictionsData || [];
