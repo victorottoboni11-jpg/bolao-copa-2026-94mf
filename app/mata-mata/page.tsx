@@ -99,6 +99,8 @@ function MatchNode({
 }) {
   const home = matchData?.home_team_info?.name || matchData?.home_team || homeLabel;
   const away = matchData?.away_team_info?.name || matchData?.away_team || awayLabel;
+  const homeFlag = matchData?.home_team_info?.flag_url;
+  const awayFlag = matchData?.away_team_info?.flag_url;
   const finished = matchData?.is_finished;
   const hasPrediction = prediction && (prediction.predicted_home !== undefined);
   const kickoff = matchData?.kickoff_at ? formatBrazilTime(matchData.kickoff_at, "date") : null;
@@ -124,13 +126,19 @@ function MatchNode({
         </div>
       )}
       <div className={`flex items-center justify-between px-2 py-1 text-[11px] ${finished && matchData?.winner === "home" ? "text-[#00ffb2] font-bold" : "text-gray-300"}`}>
-        <span className="truncate flex-1">{home}</span>
+        <span className="flex items-center gap-1 truncate flex-1">
+          {homeFlag && <img src={homeFlag} alt="" className="w-4 h-3 rounded-sm object-cover flex-none" />}
+          <span className="truncate">{home}</span>
+        </span>
         {finished && <span className="ml-1 font-bold text-white">{matchData?.home_score}</span>}
         {!finished && hasPrediction && <span className="ml-1 text-[#00ffb2]/60">{prediction?.predicted_home}</span>}
       </div>
       <div className="h-px bg-[#ffffff08]" />
       <div className={`flex items-center justify-between px-2 py-1 text-[11px] ${finished && matchData?.winner === "away" ? "text-[#00ffb2] font-bold" : "text-gray-300"}`}>
-        <span className="truncate flex-1">{away}</span>
+        <span className="flex items-center gap-1 truncate flex-1">
+          {awayFlag && <img src={awayFlag} alt="" className="w-4 h-3 rounded-sm object-cover flex-none" />}
+          <span className="truncate">{away}</span>
+        </span>
         {finished && <span className="ml-1 font-bold text-white">{matchData?.away_score}</span>}
         {!finished && hasPrediction && <span className="ml-1 text-[#00ffb2]/60">{prediction?.predicted_away}</span>}
       </div>
