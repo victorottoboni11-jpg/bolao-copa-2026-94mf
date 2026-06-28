@@ -531,6 +531,7 @@ export default function MataMataPage() {
         {groupStageFinished && activeTab === "lista" && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {Object.values(matchesMap)
+              .filter((m) => m.match_number >= 73)
               .sort((a, b) => new Date(a.kickoff_at ?? 0).getTime() - new Date(b.kickoff_at ?? 0).getTime())
               .map((m) => {
                 const pred = predictions[m.id];
