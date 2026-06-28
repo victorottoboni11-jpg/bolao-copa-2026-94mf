@@ -409,54 +409,42 @@ export default function MataMataPage() {
               <div>32-avos</div>
             </div>
 
-            {/* Bracket principal — 8 linhas */}
-            <div className="flex gap-1 items-stretch">
+            {/* Bracket principal — estrutura em pares explícitos (evita desalinhamento visual) */}
+            <div className="flex gap-1 items-start">
 
-              {/* COL 1: 32-avos esquerda */}
-              <div className="flex flex-col justify-around gap-1 flex-none">
-                {BRACKET.left.map(({ match, home, away }) => (
-                  <div key={match}>{node(match, home, away)}</div>
-                ))}
+              {/* LADO ESQUERDO: 4 grupos de [32avos+32avos -> oitava] */}
+              <div className="flex flex-col gap-6 flex-none">
+                {[0,1,2,3].map((groupIdx) => {
+                  const m1 = BRACKET.left[groupIdx*2];
+                  const m2 = BRACKET.left[groupIdx*2+1];
+                  const oitava = BRACKET.oitavas_left[groupIdx];
+                  return (
+                    <div key={groupIdx} className="flex items-center gap-2">
+                      <div className="flex flex-col gap-2">
+                        <div>{node(m1.match, m1.home, m1.away)}</div>
+                        <div>{node(m2.match, m2.home, m2.away)}</div>
+                      </div>
+                      <div className="text-[#00ffb2]/30 text-xs px-1">→</div>
+                      <div>{node(oitava.match, oitava.home, oitava.away)}</div>
+                    </div>
+                  );
+                })}
               </div>
 
-              {/* Conectores 32-avos → oitavas esquerda */}
-              <div className="flex flex-col justify-around flex-none w-4">
-                {[0,1,2,3,4,5,6,7].map(i => (
-                  <div key={i} className={`flex-1 border-r border-t border-b border-[#00ffb2]/15 rounded-r-lg ${i % 2 === 0 ? "border-b-0 rounded-br-none" : "border-t-0 rounded-tr-none"}`} />
-                ))}
-              </div>
+              <div className="text-[#00ffb2]/20 text-xs px-2 self-center">→</div>
 
-              {/* COL 2: Oitavas esquerda */}
-              <div className="flex flex-col justify-around gap-1 flex-none" style={{paddingTop: '2.5rem', paddingBottom: '2.5rem'}}>
-                {BRACKET.oitavas_left.map(({ match, home, away }) => (
-                  <div key={match}>{node(match, home, away)}</div>
-                ))}
-              </div>
-
-              {/* Conectores oitavas → quartas esquerda */}
-              <div className="flex flex-col justify-around flex-none w-4">
-                {[0,1,2,3].map(i => (
-                  <div key={i} className={`flex-1 border-r border-t border-b border-[#00ffb2]/15 rounded-r-lg ${i % 2 === 0 ? "border-b-0 rounded-br-none" : "border-t-0 rounded-tr-none"}`} />
-                ))}
-              </div>
-
-              {/* COL 3: Quartas esquerda */}
-              <div className="flex flex-col justify-around gap-1 flex-none" style={{paddingTop: '5rem', paddingBottom: '5rem'}}>
+              {/* Quartas esquerda */}
+              <div className="flex flex-col gap-12 flex-none justify-center self-center">
                 {BRACKET.quartas_left.map(({ match, home, away }) => (
                   <div key={match}>{node(match, home, away)}</div>
                 ))}
               </div>
 
-              {/* Conectores quartas → semi esquerda */}
-              <div className="flex flex-col justify-around flex-none w-4">
-                {[0,1].map(i => (
-                  <div key={i} className={`flex-1 border-r border-t border-b border-[#00ffb2]/15 rounded-r-lg ${i % 2 === 0 ? "border-b-0 rounded-br-none" : "border-t-0 rounded-tr-none"}`} />
-                ))}
-              </div>
+              <div className="text-[#00ffb2]/20 text-xs px-2 self-center">→</div>
 
-              {/* COL 4: Semi esquerda + Final + Semi direita */}
-              <div className="flex flex-col flex-1 justify-between items-center gap-2 min-w-[150px]">
-                <div className="w-full flex justify-start">{node(BRACKET.semi_left.match, BRACKET.semi_left.home, BRACKET.semi_left.away)}</div>
+              {/* Semi esquerda + Final + Semi direita */}
+              <div className="flex flex-col flex-1 justify-center items-center gap-4 min-w-[150px] self-center">
+                <div>{node(BRACKET.semi_left.match, BRACKET.semi_left.home, BRACKET.semi_left.away)}</div>
 
                 <div className="flex flex-col items-center gap-1">
                   <p className="text-[10px] text-[#ffd700] font-bold uppercase tracking-widest">🏆 Final</p>
@@ -465,49 +453,37 @@ export default function MataMataPage() {
                   {node(BRACKET.terceiro.match, BRACKET.terceiro.home, BRACKET.terceiro.away)}
                 </div>
 
-                <div className="w-full flex justify-end">{node(BRACKET.semi_right.match, BRACKET.semi_right.home, BRACKET.semi_right.away)}</div>
+                <div>{node(BRACKET.semi_right.match, BRACKET.semi_right.home, BRACKET.semi_right.away)}</div>
               </div>
 
-              {/* Conectores semi → quartas direita */}
-              <div className="flex flex-col justify-around flex-none w-4">
-                {[0,1].map(i => (
-                  <div key={i} className={`flex-1 border-l border-t border-b border-[#00ffb2]/15 rounded-l-lg ${i % 2 === 0 ? "border-b-0 rounded-bl-none" : "border-t-0 rounded-tl-none"}`} />
-                ))}
-              </div>
+              <div className="text-[#00ffb2]/20 text-xs px-2 self-center">→</div>
 
-              {/* COL 6: Quartas direita */}
-              <div className="flex flex-col justify-around gap-1 flex-none" style={{paddingTop: '5rem', paddingBottom: '5rem'}}>
+              {/* Quartas direita */}
+              <div className="flex flex-col gap-12 flex-none justify-center self-center">
                 {BRACKET.quartas_right.map(({ match, home, away }) => (
                   <div key={match}>{node(match, home, away)}</div>
                 ))}
               </div>
 
-              {/* Conectores quartas → oitavas direita */}
-              <div className="flex flex-col justify-around flex-none w-4">
-                {[0,1,2,3].map(i => (
-                  <div key={i} className={`flex-1 border-l border-t border-b border-[#00ffb2]/15 rounded-l-lg ${i % 2 === 0 ? "border-b-0 rounded-bl-none" : "border-t-0 rounded-tl-none"}`} />
-                ))}
-              </div>
+              <div className="text-[#00ffb2]/20 text-xs px-2 self-center">→</div>
 
-              {/* COL 7: Oitavas direita */}
-              <div className="flex flex-col justify-around gap-1 flex-none" style={{paddingTop: '2.5rem', paddingBottom: '2.5rem'}}>
-                {BRACKET.oitavas_right.map(({ match, home, away }) => (
-                  <div key={match}>{node(match, home, away)}</div>
-                ))}
-              </div>
-
-              {/* Conectores oitavas → 32-avos direita */}
-              <div className="flex flex-col justify-around flex-none w-4">
-                {[0,1,2,3,4,5,6,7].map(i => (
-                  <div key={i} className={`flex-1 border-l border-t border-b border-[#00ffb2]/15 rounded-l-lg ${i % 2 === 0 ? "border-b-0 rounded-bl-none" : "border-t-0 rounded-tl-none"}`} />
-                ))}
-              </div>
-
-              {/* COL 8: 32-avos direita */}
-              <div className="flex flex-col justify-around gap-1 flex-none">
-                {BRACKET.right.map(({ match, home, away }) => (
-                  <div key={match}>{node(match, home, away)}</div>
-                ))}
+              {/* LADO DIREITO: 4 grupos de [oitava <- 32avos+32avos] */}
+              <div className="flex flex-col gap-6 flex-none">
+                {[0,1,2,3].map((groupIdx) => {
+                  const m1 = BRACKET.right[groupIdx*2];
+                  const m2 = BRACKET.right[groupIdx*2+1];
+                  const oitava = BRACKET.oitavas_right[groupIdx];
+                  return (
+                    <div key={groupIdx} className="flex items-center gap-2">
+                      <div>{node(oitava.match, oitava.home, oitava.away)}</div>
+                      <div className="text-[#00ffb2]/30 text-xs px-1">←</div>
+                      <div className="flex flex-col gap-2">
+                        <div>{node(m1.match, m1.home, m1.away)}</div>
+                        <div>{node(m2.match, m2.home, m2.away)}</div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
             </div>
