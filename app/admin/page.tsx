@@ -183,26 +183,7 @@ export default function AdminPage() {
   };
 
   if (loading || !user) {
-    const handleGenerateBracket = async () => {
-    setGeneratingBracket(true);
-    try {
-      const { getServerSupabase } = await import("@/app/lib/serverSupabase").catch(() => ({ getServerSupabase: null }));
-      const { updated, errors } = await updateKnockoutBracket(supabase);
-      if (errors.length > 0) {
-        setToast({ type: "error", text: `Erros: ${errors.join(", ")}` });
-      } else {
-        setToast({ type: "success", text: `Chaveamento gerado! ${updated} jogos atualizados.` });
-        await refreshMatches();
-      }
-    } catch (err) {
-      setToast({ type: "error", text: "Erro ao gerar chaveamento" });
-    } finally {
-      setGeneratingBracket(false);
-      window.setTimeout(() => setToast(null), 4000);
-    }
-  };
-
-  return (
+    return (
       <div className="min-h-screen flex items-center justify-center bg-[#04070f] px-4 py-8 text-white">
         <div className="text-center space-y-4">
           <div className="w-14 h-14 rounded-full border-4 border-[#00ffb2]/30 border-t-[#00ffb2] animate-spin mx-auto"></div>
@@ -213,26 +194,7 @@ export default function AdminPage() {
   }
 
   if (!isAdmin) {
-    const handleGenerateBracket = async () => {
-    setGeneratingBracket(true);
-    try {
-      const { getServerSupabase } = await import("@/app/lib/serverSupabase").catch(() => ({ getServerSupabase: null }));
-      const { updated, errors } = await updateKnockoutBracket(supabase);
-      if (errors.length > 0) {
-        setToast({ type: "error", text: `Erros: ${errors.join(", ")}` });
-      } else {
-        setToast({ type: "success", text: `Chaveamento gerado! ${updated} jogos atualizados.` });
-        await refreshMatches();
-      }
-    } catch (err) {
-      setToast({ type: "error", text: "Erro ao gerar chaveamento" });
-    } finally {
-      setGeneratingBracket(false);
-      window.setTimeout(() => setToast(null), 4000);
-    }
-  };
-
-  return (
+    return (
       <main className="min-h-screen bg-[#04070f] px-4 py-8 text-white">
         <div className="mx-auto max-w-3xl rounded-3xl border border-[#00ffb2]/20 bg-slate-950/90 p-10 text-center">
           <h1 className="text-2xl font-bold">Acesso Negado</h1>
@@ -248,12 +210,17 @@ export default function AdminPage() {
   const handleGenerateBracket = async () => {
     setGeneratingBracket(true);
     try {
-      const { getServerSupabase } = await import("@/app/lib/serverSupabase").catch(() => ({ getServerSupabase: null }));
-      const { updated, errors } = await updateKnockoutBracket(supabase);
-      if (errors.length > 0) {
-        setToast({ type: "error", text: `Erros: ${errors.join(", ")}` });
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      const res = await fetch("/api/admin/generate-bracket", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const payload = await res.json();
+      if (!res.ok) {
+        setToast({ type: "error", text: payload?.error || "Erro ao gerar chaveamento" });
       } else {
-        setToast({ type: "success", text: `Chaveamento gerado! ${updated} jogos atualizados.` });
+        setToast({ type: "success", text: `Chaveamento gerado! ${payload.updated} jogos atualizados.` });
         await refreshMatches();
       }
     } catch (err) {
