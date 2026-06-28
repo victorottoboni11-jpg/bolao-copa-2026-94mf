@@ -265,6 +265,7 @@ export default function MataMataPage() {
   const [groupStageFinished, setGroupStageFinished] = useState(true); // Liberado manualmente - chaveamento parcial
   const [loadingData, setLoadingData] = useState(true);
   const [selectedMatch, setSelectedMatch] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState("chaveamento");
   const [savingMatchId, setSavingMatchId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ type: "success" | "error" | "info"; message: string } | null>(null);
 
@@ -390,6 +391,32 @@ export default function MataMataPage() {
           </div>
         )}
 
+        {/* Abas */}
+        {groupStageFinished && (
+          <div className="flex gap-2">
+            <button
+              onClick={() => setActiveTab("chaveamento")}
+              className={`px-4 py-2 rounded-xl text-sm font-semibold transition ${
+                activeTab === "chaveamento"
+                  ? "bg-gradient-to-r from-[#00ffb2] to-[#00b2ff] text-black"
+                  : "border border-[#00ffb2]/20 text-[#00ffb2] hover:bg-[#00ffb2]/10"
+              }`}
+            >
+              Chaveamento
+            </button>
+            <button
+              onClick={() => setActiveTab("lista")}
+              className={`px-4 py-2 rounded-xl text-sm font-semibold transition ${
+                activeTab === "lista"
+                  ? "bg-gradient-to-r from-[#00ffb2] to-[#00b2ff] text-black"
+                  : "border border-[#00ffb2]/20 text-[#00ffb2] hover:bg-[#00ffb2]/10"
+              }`}
+            >
+              Lista de Jogos
+            </button>
+          </div>
+        )}
+
         {/* Legenda */}
         {groupStageFinished && (
           <div className="flex flex-wrap gap-3 text-xs text-gray-400">
@@ -401,6 +428,7 @@ export default function MataMataPage() {
         )}
 
         {/* Chaveamento em árvore */}
+        {groupStageFinished && activeTab === "chaveamento" && (
         <div className="rounded-2xl border border-[#00ffb2]/20 bg-[#050816] p-6 overflow-x-auto">
           <div className="min-w-[1100px]">
 
@@ -497,6 +525,68 @@ export default function MataMataPage() {
             </div>
           </div>
         </div>
+        )}
+
+        {/* Lista de Jogos */}
+        {groupStageFinished && activeTab === "lista" && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Object.values(matchesMap)
+              .sort((a, b) => new Date(a.kickoff_at ?? 0).getTime() - new Date(b.kickoff_at ?? 0).getTime())
+              .map((m) => {
+                const pred = predictions[m.id];
+                const locked = isPredictionLocked(m.kickoff_at, predictionsOpen);
+                return (
+                  <div
+                    key={m.id}
+                    onClick={!locked ? () => setSelectedMatch(m.match_number) : undefined}
+                    className={`rounded-2xl border p-4 cursor-pointer transition hover:scale-[1.02] ${
+                      m.is_finished
+                        ? "border-[#00ffb2]/40 bg-[#081120]"
+                        : pred
+                        ? "border-[#00ffb2]/30 bg-[#050816]"
+                        : "border-[#ffffff15] bg-[#050816]"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between text-[10px] text-gray-500 mb-2">
+                      <span>J{m.match_number}</span>
+                      <span>{m.kickoff_at ? formatBrazilTime(m.kickoff_at, "full") : ""}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        {m.home_team_info?.flag_url && (
+                          <img src={m.home_team_info.flag_url} alt="" className="w-6 h-4 rounded-sm object-cover flex-none" />
+                        )}
+                        <span className="text-sm text-white truncate">{m.home_team_info?.name || m.home_team}</span>
+                      </div>
+                      <div className="px-3 text-center">
+                        {m.is_finished ? (
+                          <span className="text-sm font-bold text-white">{m.home_score} x {m.away_score}</span>
+                        ) : pred ? (
+                          <span className="text-sm font-bold text-[#00ffb2]">{pred.predicted_home} x {pred.predicted_away}</span>
+                        ) : (
+                          <span className="text-xs text-gray-500">vs</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
+                        <span className="text-sm text-white truncate">{m.away_team_info?.name || m.away_team}</span>
+                        {m.away_team_info?.flag_url && (
+                          <img src={m.away_team_info.flag_url} alt="" className="w-6 h-4 rounded-sm object-cover flex-none" />
+                        )}
+                      </div>
+                    </div>
+                    {locked && !m.is_finished && (
+                      <p className="text-center text-[10px] text-red-400 mt-2">🔒 Palpites encerrados</p>
+                    )}
+                    {!locked && !m.is_finished && (
+                      <p className="text-center text-[10px] text-[#00ffb2]/60 mt-2">
+                        {pred ? "Clique para atualizar" : "Clique para palpitar"}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+          </div>
+        )}
 
       </div>
     </main>
