@@ -253,7 +253,7 @@ export default function MataMataPage() {
   const [matchesMap, setMatchesMap] = useState<Record<number, MatchData>>({});
   const [predictions, setPredictions] = useState<Record<string, Prediction>>({});
   const [predictionsOpen, setPredictionsOpen] = useState(true);
-  const [groupStageFinished, setGroupStageFinished] = useState(false);
+  const [groupStageFinished, setGroupStageFinished] = useState(true); // Liberado manualmente - chaveamento parcial
   const [loadingData, setLoadingData] = useState(true);
   const [selectedMatch, setSelectedMatch] = useState<number | null>(null);
   const [savingMatchId, setSavingMatchId] = useState<string | null>(null);
