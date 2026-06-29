@@ -14,6 +14,7 @@ import type { Match, Prediction } from "@/app/types";
 // Estrutura do chaveamento oficial FIFA 2026
 // Numeração oficial confirmada via fifa.com (jogos 73-88 dos 32-avos)
 const BRACKET = {
+  // Lado esquerdo: 32-avos 73-80
   left: [
     { match: 73, home: "Alemanha", away: "Paraguai" },
     { match: 74, home: "França", away: "Suécia" },
@@ -24,6 +25,7 @@ const BRACKET = {
     { match: 79, home: "Estados Unidos", away: "Bósnia e Herzegovina" },
     { match: 80, home: "Bélgica", away: "Senegal" },
   ],
+  // Lado direito: 32-avos 81-88
   right: [
     { match: 81, home: "Brasil", away: "Japão" },
     { match: 82, home: "Costa do Marfim", away: "Noruega" },
@@ -34,24 +36,28 @@ const BRACKET = {
     { match: 87, home: "Suíça", away: "Argélia" },
     { match: 88, home: "Colômbia", away: "Gana" },
   ],
+  // Lado A (esquerda visual): oitavas 89, 90, 93, 94
   oitavas_left: [
     { match: 89, home: "W73", away: "W74" },
     { match: 90, home: "W75", away: "W76" },
-    { match: 91, home: "W77", away: "W78" },
-    { match: 92, home: "W79", away: "W80" },
+    { match: 93, home: "W77", away: "W78" },
+    { match: 94, home: "W79", away: "W80" },
   ],
+  // Lado B (direita visual): oitavas 91, 92, 95, 96
   oitavas_right: [
-    { match: 93, home: "W81", away: "W82" },
-    { match: 94, home: "W83", away: "W84" },
+    { match: 91, home: "W81", away: "W82" },
+    { match: 92, home: "W83", away: "W84" },
     { match: 95, home: "W85", away: "W86" },
     { match: 96, home: "W87", away: "W88" },
   ],
+  // Lado A: J97 (W89 x W90) e J98 (W93 x W94)
   quartas_left: [
     { match: 97, home: "W89", away: "W90" },
-    { match: 98, home: "W91", away: "W92" },
+    { match: 98, home: "W93", away: "W94" },
   ],
+  // Lado B: J99 (W91 x W92) e J100 (W95 x W96)
   quartas_right: [
-    { match: 99, home: "W93", away: "W94" },
+    { match: 99, home: "W91", away: "W92" },
     { match: 100, home: "W95", away: "W96" },
   ],
   semi_left: { match: 101, home: "W97", away: "W98" },
