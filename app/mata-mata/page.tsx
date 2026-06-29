@@ -320,7 +320,23 @@ export default function MataMataPage() {
       const saved = await savePrediction(user.id, matchData.id, home, away, winner ?? null, penalties ?? false, method ?? null);
       if (saved) {
         setPredictions(p => ({ ...p, [matchData.id]: saved }));
-        setToast({ type: "success", message: "Palpite salvo!" });
+
+        const homeName = matchData.home_team_info?.fifa_code || matchData.home_team_info?.name || matchData.home_team || "Casa";
+        const awayName = matchData.away_team_info?.fifa_code || matchData.away_team_info?.name || matchData.away_team || "Fora";
+        const winnerName = winner === "home"
+          ? (matchData.home_team_info?.name || matchData.home_team || "Casa")
+          : winner === "away"
+          ? (matchData.away_team_info?.name || matchData.away_team || "Fora")
+          : null;
+        const methodLabel = method === "penalties" ? "nos pênaltis" : method === "extra_time" ? "na prorrogação" : "no tempo normal";
+
+        let detail = `${homeName} ${home} x ${away} ${awayName}`;
+        if (winnerName) {
+          detail += ` · Classificado: ${winnerName}`;
+          if (home === away) detail += ` (${methodLabel})`;
+        }
+
+        setToast({ type: "success", message: `Palpite salvo: ${detail}` });
         setSelectedMatch(null);
       } else {
         setToast({ type: "error", message: "Erro ao salvar palpite" });
