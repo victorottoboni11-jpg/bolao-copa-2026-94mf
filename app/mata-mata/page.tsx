@@ -438,24 +438,12 @@ export default function MataMataPage() {
         <div className="rounded-2xl border border-[#00ffb2]/20 bg-[#050816] p-6 overflow-x-auto">
           <div className="min-w-[1100px]">
 
-            {/* Labels das fases */}
-            <div className="grid grid-cols-9 mb-4 text-center text-[10px] text-[#00ffb2] font-semibold uppercase tracking-wider">
-              <div>32-avos</div>
-              <div>Oitavas</div>
-              <div>Quartas</div>
-              <div>Semifinal</div>
-              <div>Final</div>
-              <div>Semifinal</div>
-              <div>Quartas</div>
-              <div>Oitavas</div>
-              <div>32-avos</div>
-            </div>
-
             {/* Bracket principal — estrutura em pares explícitos (evita desalinhamento visual) */}
             <div className="flex gap-1 items-start">
 
               {/* LADO ESQUERDO: 4 grupos de [32avos+32avos -> oitava] */}
               <div className="flex flex-col gap-6 flex-none">
+                <p className="text-[10px] text-[#00ffb2] font-semibold uppercase tracking-wider mb-1">32-avos / Oitavas</p>
                 {[0,1,2,3].map((groupIdx) => {
                   const m1 = BRACKET.left[groupIdx*2];
                   const m2 = BRACKET.left[groupIdx*2+1];
@@ -476,7 +464,8 @@ export default function MataMataPage() {
               <div className="text-[#00ffb2]/20 text-xs px-2 self-center">→</div>
 
               {/* Quartas esquerda */}
-              <div className="flex flex-col gap-12 flex-none justify-center self-center">
+              <div className="flex flex-col gap-12 flex-none justify-center self-stretch">
+                <p className="text-[10px] text-[#00ffb2] font-semibold uppercase tracking-wider text-center mb-1">Quartas</p>
                 {BRACKET.quartas_left.map(({ match, home, away }) => (
                   <div key={match}>{node(match, home, away)}</div>
                 ))}
@@ -485,7 +474,8 @@ export default function MataMataPage() {
               <div className="text-[#00ffb2]/20 text-xs px-2 self-center">→</div>
 
               {/* Semi esquerda + Final + Semi direita */}
-              <div className="flex flex-col flex-1 justify-center items-center gap-4 min-w-[150px] self-center">
+              <div className="flex flex-col flex-1 justify-center items-center gap-4 min-w-[150px] self-stretch">
+                <p className="text-[10px] text-[#00ffb2] font-semibold uppercase tracking-wider text-center mb-1">Semifinal / Final</p>
                 <div>{node(BRACKET.semi_left.match, BRACKET.semi_left.home, BRACKET.semi_left.away)}</div>
 
                 <div className="flex flex-col items-center gap-1">
@@ -501,7 +491,8 @@ export default function MataMataPage() {
               <div className="text-[#00ffb2]/20 text-xs px-2 self-center">→</div>
 
               {/* Quartas direita */}
-              <div className="flex flex-col gap-12 flex-none justify-center self-center">
+              <div className="flex flex-col gap-12 flex-none justify-center self-stretch">
+                <p className="text-[10px] text-[#00ffb2] font-semibold uppercase tracking-wider text-center mb-1">Quartas</p>
                 {BRACKET.quartas_right.map(({ match, home, away }) => (
                   <div key={match}>{node(match, home, away)}</div>
                 ))}
@@ -511,6 +502,7 @@ export default function MataMataPage() {
 
               {/* LADO DIREITO: 4 grupos de [oitava <- 32avos+32avos] */}
               <div className="flex flex-col gap-6 flex-none">
+                <p className="text-[10px] text-[#00ffb2] font-semibold uppercase tracking-wider mb-1 text-right">Oitavas / 32-avos</p>
                 {[0,1,2,3].map((groupIdx) => {
                   const m1 = BRACKET.right[groupIdx*2];
                   const m2 = BRACKET.right[groupIdx*2+1];
