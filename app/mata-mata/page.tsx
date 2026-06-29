@@ -317,7 +317,7 @@ export default function MataMataPage() {
     if (!matchData) return;
     setSavingMatchId(matchData.id);
     try {
-      const saved = await savePrediction(user.id, matchData.id, home, away, winner ?? null, penalties ?? false);
+      const saved = await savePrediction(user.id, matchData.id, home, away, winner ?? null, penalties ?? false, method ?? null);
       if (saved) {
         setPredictions(p => ({ ...p, [matchData.id]: saved }));
         setToast({ type: "success", message: "Palpite salvo!" });
