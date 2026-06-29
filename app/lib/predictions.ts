@@ -44,7 +44,8 @@ export async function savePrediction(
   predictedHome: number,
   predictedAway: number,
   predictedWinner?: string | null,
-  predictedPenalties?: boolean | null
+  predictedPenalties?: boolean | null,
+  predictedMethod?: string | null
 ): Promise<Prediction | null> {
   try {
     // Use server API so locking is enforced server-side (30 minutes before kickoff)
@@ -59,7 +60,7 @@ export async function savePrediction(
         Authorization: `Bearer ${sessionData.session.access_token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ matchId, predictedHome, predictedAway, predictedWinner, predictedPenalties }),
+      body: JSON.stringify({ matchId, predictedHome, predictedAway, predictedWinner, predictedPenalties, predictedMethod }),
     });
 
     if (!res.ok) {
