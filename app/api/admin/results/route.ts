@@ -8,6 +8,35 @@ import { normalizeMatchPhase } from "../../../lib/phases";
 import { recalculateRankings } from "../../../lib/rankings";
 import { NextRequest, NextResponse } from "next/server";
 
+// Mapa de avanço automático do mata-mata: vencedor de cada jogo avança para o próximo
+const KNOCKOUT_ADVANCE_MAP: Record<number, { nextMatch: number; slot: "home" | "away" }> = {
+  // 32-avos -> oitavas
+  73: { nextMatch: 89, slot: "home" }, 74: { nextMatch: 89, slot: "away" },
+  75: { nextMatch: 90, slot: "home" }, 76: { nextMatch: 90, slot: "away" },
+  81: { nextMatch: 91, slot: "home" }, 82: { nextMatch: 91, slot: "away" },
+  83: { nextMatch: 92, slot: "home" }, 84: { nextMatch: 92, slot: "away" },
+  77: { nextMatch: 93, slot: "home" }, 78: { nextMatch: 93, slot: "away" },
+  79: { nextMatch: 94, slot: "home" }, 80: { nextMatch: 94, slot: "away" },
+  85: { nextMatch: 95, slot: "home" }, 86: { nextMatch: 95, slot: "away" },
+  87: { nextMatch: 96, slot: "home" }, 88: { nextMatch: 96, slot: "away" },
+  // oitavas -> quartas
+  89: { nextMatch: 97, slot: "home" }, 90: { nextMatch: 97, slot: "away" },
+  93: { nextMatch: 98, slot: "home" }, 94: { nextMatch: 98, slot: "away" },
+  91: { nextMatch: 99, slot: "home" }, 92: { nextMatch: 99, slot: "away" },
+  95: { nextMatch: 100, slot: "home" }, 96: { nextMatch: 100, slot: "away" },
+  // quartas -> semis
+  97: { nextMatch: 101, slot: "home" }, 98: { nextMatch: 101, slot: "away" },
+  99: { nextMatch: 102, slot: "home" }, 100: { nextMatch: 102, slot: "away" },
+  // semis -> final (vencedores)
+  101: { nextMatch: 104, slot: "home" }, 102: { nextMatch: 104, slot: "away" },
+};
+
+// Perdedores das semis avançam para a disputa de 3º lugar
+const LOSER_ADVANCE_MAP: Record<number, { nextMatch: number; slot: "home" | "away" }> = {
+  101: { nextMatch: 103, slot: "home" },
+  102: { nextMatch: 103, slot: "away" },
+};
+
 /**
  * GET /api/admin/results?phase=group&status=pending
  * List matches with optional filtering
@@ -224,6 +253,48 @@ export async function POST(request: NextRequest) {
     }
 
     console.log("[admin/results] match updated", { matchId, homeScore, awayScore });
+
+    // Avançar automaticamente o vencedor (e perdedor, se aplicável) para o próximo jogo do mata-mata
+    const matchNumber = match.match_number as number | undefined;
+    if (matchNumber && KNOCKOUT_ADVANCE_MAP[matchNumber]) {
+      const winnerTeamId = winner === "home" ? match.home_team_id : winner === "away" ? match.away_team_id : null;
+
+      if (winnerTeamId) {
+        const { nextMatch, slot } = KNOCKOUT_ADVANCE_MAP[matchNumber];
+        const updateField = slot === "home" ? "home_team_id" : "away_team_id";
+
+        const { error: advanceError } = await supabase
+          .from("matches")
+          .update({ [updateField]: winnerTeamId })
+          .eq("match_number", nextMatch);
+
+        if (advanceError) {
+          console.error("[admin/results] erro ao avançar vencedor:", advanceError);
+        } else {
+          console.log("[admin/results] vencedor avançado", { from: matchNumber, to: nextMatch, slot, winnerTeamId });
+        }
+      }
+
+      // Avançar perdedor para disputa de 3º lugar, se aplicável (semifinais)
+      if (LOSER_ADVANCE_MAP[matchNumber]) {
+        const loserTeamId = winner === "home" ? match.away_team_id : winner === "away" ? match.home_team_id : null;
+        if (loserTeamId) {
+          const { nextMatch: loserNextMatch, slot: loserSlot } = LOSER_ADVANCE_MAP[matchNumber];
+          const loserUpdateField = loserSlot === "home" ? "home_team_id" : "away_team_id";
+
+          const { error: loserAdvanceError } = await supabase
+            .from("matches")
+            .update({ [loserUpdateField]: loserTeamId })
+            .eq("match_number", loserNextMatch);
+
+          if (loserAdvanceError) {
+            console.error("[admin/results] erro ao avançar perdedor:", loserAdvanceError);
+          } else {
+            console.log("[admin/results] perdedor avançado para 3º lugar", { from: matchNumber, to: loserNextMatch, slot: loserSlot, loserTeamId });
+          }
+        }
+      }
+    }
 
     // Recalculate all predictions for this match
     const { data: predictions, error: predError } = await supabase
