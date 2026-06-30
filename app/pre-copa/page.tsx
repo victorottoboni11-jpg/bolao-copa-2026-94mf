@@ -36,7 +36,7 @@ export default function PreCopaPage() {
 
   // Usar os nomes reais do banco (top_scorer, best_goalkeeper, best_young, predicted_total_goals)
   // com fallback para os nomes do frontend (top_scorer_player, etc)
-  const fields = prediction ? [
+  const allFields = prediction ? [
     { label: "Campeão", value: prediction.champion_team },
     { label: "Vice-Campeão", value: prediction.runner_up_team },
     { label: "Artilheiro", value: prediction.top_scorer_player ?? prediction.top_scorer },
@@ -45,6 +45,8 @@ export default function PreCopaPage() {
     { label: "Melhor Jogador", value: prediction.best_player },
     { label: "Revelação", value: prediction.tournament_revelation ?? prediction.best_young },
   ] : [];
+  // Mostrar apenas campos com dados
+  const fields = allFields.filter(f => f.value !== null && f.value !== undefined && f.value !== "");
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(0,255,178,0.14),_transparent_28%),_linear-gradient(180deg,#04070f_0%,#070b16_100%)] px-4 py-8 text-white">
@@ -93,10 +95,7 @@ export default function PreCopaPage() {
                 <div key={label} className="flex items-center justify-between px-6 py-4">
                   <span className="text-sm text-gray-400">{label}</span>
                   <span className="text-sm font-semibold text-white text-right">
-                    {value !== null && value !== undefined && value !== ""
-                      ? String(value)
-                      : <span className="text-gray-600 italic">Não informado</span>
-                    }
+{String(value)}
                   </span>
                 </div>
               ))}
