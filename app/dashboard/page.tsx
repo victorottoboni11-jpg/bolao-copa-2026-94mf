@@ -230,6 +230,10 @@ export default function DashboardPage() {
             <h2 className="text-xl font-bold mb-2 text-[#00ffb2]">Ranking</h2>
             <p className="text-gray-400">Veja a classificação do bolão.</p>
           </Link>
+          <Link href="/regras" className="rounded-2xl border border-[#00ffb233] bg-[#050816] p-6 hover:border-[#00ffb2]">
+            <h2 className="text-xl font-bold mb-2 text-[#00ffb2]">📋 Regras</h2>
+            <p className="text-gray-400">Veja como funciona a pontuação.</p>
+          </Link>
         </div>
 
         {/* RESUMO DO USUÁRIO */}
