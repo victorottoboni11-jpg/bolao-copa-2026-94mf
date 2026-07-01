@@ -30,11 +30,11 @@ export const SCORING_RULES = {
   // Só resultado = 1 pt
   // Erro total = 0 pts
   KNOCKOUT: {
-    EXACT_ALL: 8,           // class + placar + resultado corretos
-    WINNER_RESULT: 5,       // class correto + resultado (normal/pen) correto, placar errado
-    ONLY_WINNER: 4,         // só class correto
-    SCORE_RESULT: 4,        // placar + resultado corretos, class errado
-    ONLY_RESULT: 1,         // só resultado (normal/pen) correto
+    EXACT_ALL: 8,           // class + placar + método corretos (cravada)
+    WINNER_RESULT: 4,       // class + método corretos, placar errado
+    ONLY_WINNER: 2,         // só class correto
+    SCORE_RESULT: 6,        // placar + método corretos, class errado
+    ONLY_RESULT: 1,         // só método correto
     WRONG: 0,
   },
 };
