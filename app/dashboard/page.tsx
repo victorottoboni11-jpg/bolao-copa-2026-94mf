@@ -90,6 +90,12 @@ export default function DashboardPage() {
         })));
       }
 
+      // Buscar todos os usuarios para os maiores cravadores
+      const { data: allUsersData } = await supabase
+        .from("users")
+        .select("id, full_name, email");
+      setAllUsers(allUsersData || []);
+
       const { data: predictionsData } = await supabase
         .from("predictions")
         .select("*")
