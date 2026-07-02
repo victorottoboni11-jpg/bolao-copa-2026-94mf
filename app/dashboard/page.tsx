@@ -47,6 +47,7 @@ export default function DashboardPage() {
   const [showPalpites, setShowPalpites] = useState(false);
   const [allPredictions, setAllPredictions] = useState<any[]>([]);
   const [topRanking, setTopRanking] = useState<any[]>([]);
+  const [allUsers, setAllUsers] = useState<any[]>([]);
 
   useEffect(() => {
     async function loadData() {
@@ -289,11 +290,13 @@ export default function DashboardPage() {
                   {stats.topCravadores.length === 0 && <p className="text-xs text-gray-500">Nenhuma cravada ainda</p>}
                   {stats.topCravadores.map(([userId, count], i) => {
                     const rankUser = topRanking.find(r => r.user_id === userId);
+                    const anyUser = allUsers.find((u: any) => u.id === userId);
+                    const userName = rankUser?.name || anyUser?.full_name || anyUser?.email || "—";
                     return (
                       <div key={userId} className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="text-lg">{i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"}</span>
-                          <span className="text-sm text-white truncate max-w-[120px]">{rankUser?.name || "—"}</span>
+                          <span className="text-sm text-white truncate max-w-[120px]">{userName}</span>
                         </div>
                         <span className="text-sm font-bold text-[#00ffb2]">{count} 💎</span>
                       </div>
