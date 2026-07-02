@@ -118,7 +118,10 @@ async function calculateRankingFromPredictions(client: SupabaseClient): Promise<
     if (!match) return;
 
     // Usar pontos já salvos na prediction (corrigidos manualmente ou pelo admin)
-    const matchPoints = prediction.points ?? calculateMatchPoints(prediction, match).points;
+    const savedPoints = (prediction as any).points;
+    const matchPoints = (savedPoints !== null && savedPoints !== undefined)
+      ? Number(savedPoints)
+      : calculateMatchPoints(prediction, match).points;
     const exact = isExact(prediction, match) ? 1 : 0;
 
     const userId = prediction.user_id;
