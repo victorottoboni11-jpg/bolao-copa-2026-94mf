@@ -368,15 +368,13 @@ export default function DashboardPage() {
                     const home = (match as any).home_team_info;
                     const away = (match as any).away_team_info;
                     const finished = match.is_finished;
-                    const correct = finished && match.home_score !== null && (
-                      pred.predicted_home === match.home_score && pred.predicted_away === match.away_score
-                        ? "cravada"
-                        : (() => {
-                            const ar = (match.home_score ?? 0) > (match.away_score ?? 0) ? "h" : (match.away_score ?? 0) > (match.home_score ?? 0) ? "a" : "d";
-                            const pr = pred.predicted_home > pred.predicted_away ? "h" : pred.predicted_away > pred.predicted_home ? "a" : "d";
-                            return ar === pr ? "acerto" : "erro";
-                          })()
-                    );
+                    const correct = finished && match.home_score !== null && (() => {
+                       const pts = pred.points ?? 0;
+                       if (pts === 0) return "erro";
+                       const exactScore = pred.predicted_home === match.home_score && pred.predicted_away === match.away_score;
+                       if (exactScore && pts >= 6) return "cravada";
+                       return "acerto";
+                     })();
                     return (
                       <div key={pred.id} className={`flex items-center justify-between px-4 py-3 rounded-xl border ${
                         correct === "cravada" ? "border-[#00ffb2]/40 bg-[#00ffb2]/5" :
