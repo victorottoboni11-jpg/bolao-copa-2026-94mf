@@ -315,7 +315,7 @@ export async function POST(request: NextRequest) {
 
       // Calculate points for each prediction and update one by one
       for (const pred of predictions) {
-        const scoring = calculateMatchPoints(pred, { ...match, home_score: homeScore, away_score: awayScore });
+        const scoring = calculateMatchPoints(pred, { ...match, home_score: homeScore, away_score: awayScore, winner, winner_type: winnerType });
 
         const { error: updatePredError } = await supabase
           .from("predictions")
