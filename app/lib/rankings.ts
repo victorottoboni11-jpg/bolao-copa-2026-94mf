@@ -117,7 +117,8 @@ async function calculateRankingFromPredictions(client: SupabaseClient): Promise<
     const match = matchMap.get(String(prediction.match_id));
     if (!match) return;
 
-    const matchPoints = calculateMatchPoints(prediction, match).points;
+    // Usar pontos já salvos na prediction (corrigidos manualmente ou pelo admin)
+    const matchPoints = prediction.points ?? calculateMatchPoints(prediction, match).points;
     const exact = isExact(prediction, match) ? 1 : 0;
 
     const userId = prediction.user_id;
