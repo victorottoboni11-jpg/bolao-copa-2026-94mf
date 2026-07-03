@@ -34,6 +34,7 @@ export const SCORING_RULES = {
     WINNER_RESULT: 4,       // class + método corretos, placar errado
     ONLY_WINNER: 2,         // só class correto
     SCORE_RESULT: 6,        // placar + método corretos, class errado
+    SCORE_ONLY: 5,          // só placar correto (class e método errados)
     ONLY_RESULT: 1,         // só método correto
     WRONG: 0,
   },
@@ -118,6 +119,11 @@ export function calculateKnockoutPoints(prediction: Prediction, match: Match): n
   // Placar + resultado corretos (class errado)
   if (!correctWinner && exactScore && correctResult) {
     return SCORING_RULES.KNOCKOUT.SCORE_RESULT;
+  }
+
+  // Só placar correto (class e método errados)
+  if (!correctWinner && exactScore && !correctResult) {
+    return SCORING_RULES.KNOCKOUT.SCORE_ONLY;
   }
 
   // Só resultado (normal/pen) correto
