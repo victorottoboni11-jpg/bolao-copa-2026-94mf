@@ -85,11 +85,13 @@ export default function RegrasPage() {
           <div className="divide-y divide-[#ffffff08]">
             {[
               { label: "💎 Cravada completa", pts: "8 pts", desc: "Placar + classificado + método corretos (ex: 2x1, Alemanha, tempo normal)" },
+              { label: "Placar + classificado corretos", pts: "7 pts", desc: "Acertou o placar e quem passou, mas errou o método" },
               { label: "Placar + método corretos", pts: "6 pts", desc: "Acertou o placar e o método, mas errou o classificado" },
+              { label: "Só placar correto", pts: "5 pts", desc: "Acertou o placar, mas errou o classificado e o método" },
               { label: "Classificado + método corretos", pts: "4 pts", desc: "Acertou quem passou e o método, mas errou o placar" },
-              { label: "Só classificado correto", pts: "2 pts", desc: "Acertou quem passou, mas errou o placar e/ou o método" },
+              { label: "Só classificado correto", pts: "2 pts", desc: "Acertou quem passou, mas errou o placar e o método" },
               { label: "Só método correto", pts: "1 pt", desc: "Acertou se foi tempo normal, prorrogação ou pênaltis" },
-              { label: "Erro total", pts: "0 pts", desc: "Errou o classificado e o método" },
+              { label: "Erro total", pts: "0 pts", desc: "Errou tudo" },
             ].map(({ label, pts, desc }) => (
               <div key={label} className="flex justify-between items-center px-6 py-4">
                 <div>
