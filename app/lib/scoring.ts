@@ -30,11 +30,12 @@ export const SCORING_RULES = {
   // Só resultado = 1 pt
   // Erro total = 0 pts
   KNOCKOUT: {
-    EXACT_ALL: 8,           // class + placar + método corretos (cravada)
-    WINNER_RESULT: 4,       // class + método corretos, placar errado
+    EXACT_ALL: 8,           // placar + class + método corretos (cravada)
+    SCORE_WINNER: 7,        // placar + class corretos (método errado)
+    SCORE_RESULT: 6,        // placar + método corretos (class errado)
+    SCORE_ONLY: 5,          // só placar correto
+    WINNER_RESULT: 4,       // class + método corretos (placar errado)
     ONLY_WINNER: 2,         // só class correto
-    SCORE_RESULT: 6,        // placar + método corretos, class errado
-    SCORE_ONLY: 5,          // só placar correto (class e método errados)
     ONLY_RESULT: 1,         // só método correto
     WRONG: 0,
   },
@@ -101,22 +102,17 @@ export function calculateKnockoutPoints(prediction: Prediction, match: Match): n
   const correctWinner = actualWinner !== null && predictedWinnerSide === actualWinner;
   const correctResult = actualMethod === predictedMethod;
 
-  // Cravada: class + placar + resultado (normal/pen)
+  // Cravada: placar + class + método corretos
   if (correctWinner && exactScore && correctResult) {
     return SCORING_RULES.KNOCKOUT.EXACT_ALL;
   }
 
-  // Classificado + resultado corretos (placar errado)
-  if (correctWinner && correctResult && !exactScore) {
-    return SCORING_RULES.KNOCKOUT.WINNER_RESULT;
+  // Placar + class corretos (método errado)
+  if (correctWinner && exactScore && !correctResult) {
+    return SCORING_RULES.KNOCKOUT.SCORE_WINNER;
   }
 
-  // Só classificado (resultado errado, placar errado)
-  if (correctWinner && !correctResult) {
-    return SCORING_RULES.KNOCKOUT.ONLY_WINNER;
-  }
-
-  // Placar + resultado corretos (class errado)
+  // Placar + método corretos (class errado)
   if (!correctWinner && exactScore && correctResult) {
     return SCORING_RULES.KNOCKOUT.SCORE_RESULT;
   }
@@ -126,7 +122,17 @@ export function calculateKnockoutPoints(prediction: Prediction, match: Match): n
     return SCORING_RULES.KNOCKOUT.SCORE_ONLY;
   }
 
-  // Só resultado (normal/pen) correto
+  // Class + método corretos (placar errado)
+  if (correctWinner && !exactScore && correctResult) {
+    return SCORING_RULES.KNOCKOUT.WINNER_RESULT;
+  }
+
+  // Só class correto (placar e método errados)
+  if (correctWinner && !exactScore && !correctResult) {
+    return SCORING_RULES.KNOCKOUT.ONLY_WINNER;
+  }
+
+  // Só método correto
   if (!correctWinner && !exactScore && correctResult) {
     return SCORING_RULES.KNOCKOUT.ONLY_RESULT;
   }
