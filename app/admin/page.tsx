@@ -290,14 +290,7 @@ export default function AdminPage() {
                   >
                     {predictionsOpen ? "Fechar palpites" : "Abrir palpites"}
                   </button>
-                  <button
-                    type="button"
-                    onClick={handleAuditPoints}
-                    disabled={processing}
-                    className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-400 hover:bg-yellow-500/20 disabled:opacity-50"
-                  >
-                    🔍 Auditar Pontos
-                  </button>
+                  {/* Botão de auditoria desabilitado temporariamente - bug no cálculo */}
                   <button
                     type="button"
                     onClick={handleRecalculateRanking}
