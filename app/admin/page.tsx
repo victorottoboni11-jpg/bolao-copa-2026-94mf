@@ -207,6 +207,26 @@ export default function AdminPage() {
     );
   }
 
+  const handleAuditPoints = async () => {
+    setProcessing(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      const res = await fetch("/api/admin/audit-points", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const payload = await res.json();
+      if (!res.ok) throw new Error(payload?.error || "Falha na auditoria");
+      showToast("success", `Auditoria concluída! ${payload.corrections} correções aplicadas.`);
+    } catch (error) {
+      showToast("error", "Erro na auditoria de pontos");
+    } finally {
+      setProcessing(false);
+      window.setTimeout(() => setToast(null), 5000);
+    }
+  };
+
   const handleGenerateBracket = async () => {
     setGeneratingBracket(true);
     try {
@@ -269,6 +289,14 @@ export default function AdminPage() {
                     className="rounded-2xl border border-[#00ffb2]/20 bg-[#081116] px-4 py-3 text-sm text-[#00ffb2] hover:bg-[#0c1621] disabled:opacity-50"
                   >
                     {predictionsOpen ? "Fechar palpites" : "Abrir palpites"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleAuditPoints}
+                    disabled={processing}
+                    className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-400 hover:bg-yellow-500/20 disabled:opacity-50"
+                  >
+                    🔍 Auditar Pontos
                   </button>
                   <button
                     type="button"
