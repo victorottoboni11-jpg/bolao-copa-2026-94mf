@@ -39,6 +39,12 @@ export async function POST(request: NextRequest) {
       revelation,
     } = await request.json();
 
+    // Normalizar texto removendo acentos para comparação
+    const normalizeText = (s: string) => {
+      if (!s) return "";
+      return s.toLowerCase().trim().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    };
+
     // Salvar resultados oficiais
     const { error: officialError } = await serverSupabase
       .from("official_pre_copa_outcomes")
@@ -81,16 +87,16 @@ export async function POST(request: NextRequest) {
 
       // Campeão (15 pts)
       if (pred.champion_team && champion &&
-          pred.champion_team.toLowerCase() === champion.toLowerCase()) points += 15;
+          normalizeText(pred.champion_team) === normalizeText(champion)) points += 15;
 
       // Vice (10 pts)
       if (pred.runner_up_team && runner_up &&
-          pred.runner_up_team.toLowerCase() === runner_up.toLowerCase()) points += 10;
+          normalizeText(pred.runner_up_team) === normalizeText(runner_up)) points += 10;
 
       // Artilheiro nome (usando campo top_scorer do banco)
       const predTopScorer = pred.top_scorer_player || pred.top_scorer;
       if (predTopScorer && top_scorer &&
-          predTopScorer.toLowerCase() === top_scorer.toLowerCase()) points += 10;
+          normalizeText(predTopScorer) === normalizeText(top_scorer)) points += 10;
 
       // Gols do artilheiro
       const predGoals = pred.top_scorer_goals ?? pred.predicted_total_goals;
@@ -103,17 +109,17 @@ export async function POST(request: NextRequest) {
 
       // Melhor jogador (usando best_player do banco)
       if (pred.best_player && best_player &&
-          pred.best_player.toLowerCase() === best_player.toLowerCase()) points += 10;
+          normalizeText(pred.best_player) === normalizeText(best_player)) points += 10;
 
       // Melhor goleiro (usando best_goalkeeper do banco)
       const predGoalkeeper = pred.best_goalkeeper_player || pred.best_goalkeeper;
       if (predGoalkeeper && best_goalkeeper &&
-          predGoalkeeper.toLowerCase() === best_goalkeeper.toLowerCase()) points += 8;
+          normalizeText(predGoalkeeper) === normalizeText(best_goalkeeper)) points += 8;
 
       // Revelação (usando tournament_revelation ou best_young do banco)
       const predRevelation = pred.tournament_revelation || pred.best_young;
       if (predRevelation && revelation &&
-          predRevelation.toLowerCase() === revelation.toLowerCase()) points += 7;
+          normalizeText(predRevelation) === normalizeText(revelation)) points += 7;
 
       // Atualizar pontos de pré-copa
       await serverSupabase
