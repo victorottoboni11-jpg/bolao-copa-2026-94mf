@@ -1,41 +1,32 @@
-/**
- * API Route: /api/admin/pre-copa
- * Manages official pre-Copa outcomes and scoring
- */
-
-import { supabase } from "../../../lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSupabase } from "../../../lib/serverSupabase";
 
 const OFFICIAL_PRE_COPA_ID = "00000000-0000-0000-0000-000000000002";
 
-/**
- * POST /api/admin/pre-copa
- * Update official pre-Copa outcomes and recalculate all user points
- */
 export async function POST(request: NextRequest) {
   try {
-    // Verify admin access
     const authHeader = request.headers.get("Authorization") || "";
-    const token = authHeader.replace("Bearer ", "");
+    const token = authHeader.replace("Bearer ", "").trim();
 
     if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: userData } = await supabase.auth.getUser(token);
+    const serverSupabase = getServerSupabase();
 
+    const { data: userData } = await serverSupabase.auth.getUser(token);
     if (!userData?.user?.id) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
-    const { data: user } = await supabase
+    const { data: userRow } = await serverSupabase
       .from("users")
       .select("is_admin")
       .eq("id", userData.user.id)
       .single();
 
-    if (!user?.is_admin) {
-      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
+    if (!userRow?.is_admin) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const {
@@ -45,58 +36,23 @@ export async function POST(request: NextRequest) {
       top_scorer_goals,
       best_player,
       best_goalkeeper,
-      most_assists,
-      fair_play,
       revelation,
     } = await request.json();
 
-    if (
-      !champion ||
-      !runner_up ||
-      !top_scorer ||
-      top_scorer_goals === undefined ||
-      !best_player ||
-      !best_goalkeeper ||
-      !most_assists ||
-      !fair_play ||
-      !revelation
-    ) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
-    }
-
-    const { data: predictions, error: predError } = await supabase
-      .from("pre_copa_predictions")
-      .select("*");
-
-    if (predError) {
-      return NextResponse.json(
-        { error: `Failed to fetch predictions: ${predError.message}` },
-        { status: 400 }
-      );
-    }
-
-    const { error: officialError } = await supabase
+    // Salvar resultados oficiais
+    const { error: officialError } = await serverSupabase
       .from("official_pre_copa_outcomes")
-      .upsert(
-        {
-          id: OFFICIAL_PRE_COPA_ID,
-          champion_team: champion,
-          runner_up_team: runner_up,
-          top_scorer_player: top_scorer,
-          top_scorer_goals: Number(top_scorer_goals),
-          golden_ball_player: best_player,
-          best_goalkeeper_player: best_goalkeeper,
-          most_assists_player: most_assists,
-          most_assists_count: 0,
-          fair_play_team: fair_play,
-          revelation_player: revelation,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "id" }
-      );
+      .upsert({
+        id: OFFICIAL_PRE_COPA_ID,
+        champion_team: champion,
+        runner_up_team: runner_up,
+        top_scorer_player: top_scorer,
+        top_scorer_goals: Number(top_scorer_goals),
+        best_player_name: best_player,
+        best_goalkeeper_name: best_goalkeeper,
+        revelation_player: revelation,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "id" });
 
     if (officialError) {
       return NextResponse.json(
@@ -105,85 +61,102 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!predictions || predictions.length === 0) {
+    // Buscar todos os palpites de pré-copa
+    const { data: predictions, error: predError } = await serverSupabase
+      .from("pre_copa_predictions")
+      .select("*");
+
+    if (predError || !predictions?.length) {
       return NextResponse.json({
         success: true,
-        message: "Official outcomes updated (no predictions to score)",
+        message: "Official outcomes saved (no predictions to score)",
         updatedUsers: 0,
       });
     }
 
-    const { calculatePreCopaPoints } = await import("../../../lib/scoring");
+    let updatedUsers = 0;
 
-    const updates = predictions.map((pred) => {
-      const points = calculatePreCopaPoints(
-        pred.champion_team.toLowerCase() === champion.toLowerCase(),
-        pred.runner_up_team.toLowerCase() === runner_up.toLowerCase(),
-        pred.top_scorer_player.toLowerCase() === top_scorer.toLowerCase(),
-        Number(pred.top_scorer_goals) === Number(top_scorer_goals),
-        pred.golden_ball_player.toLowerCase() === best_player.toLowerCase(),
-        pred.best_goalkeeper_player?.toLowerCase() === best_goalkeeper.toLowerCase(),
-        pred.most_assists_player.toLowerCase() === most_assists.toLowerCase(),
-        pred.fair_play_team.toLowerCase() === fair_play.toLowerCase(),
-        pred.revelation_player.toLowerCase() === revelation.toLowerCase()
-      );
+    for (const pred of predictions) {
+      let points = 0;
 
-      return {
-        id: pred.id,
-        points,
-        updated_at: new Date().toISOString(),
-      };
-    });
+      // Campeão (15 pts)
+      if (pred.champion_team && champion &&
+          pred.champion_team.toLowerCase() === champion.toLowerCase()) points += 15;
 
-    // Update all pre-Copa predictions
-    const { error: updateError } = await supabase
-      .from("pre_copa_predictions")
-      .upsert(updates, { onConflict: "id" });
+      // Vice (10 pts)
+      if (pred.runner_up_team && runner_up &&
+          pred.runner_up_team.toLowerCase() === runner_up.toLowerCase()) points += 10;
 
-    if (updateError) {
-      return NextResponse.json(
-        { error: `Failed to update predictions: ${updateError.message}` },
-        { status: 400 }
-      );
+      // Artilheiro nome (usando campo top_scorer do banco)
+      const predTopScorer = pred.top_scorer_player || pred.top_scorer;
+      if (predTopScorer && top_scorer &&
+          predTopScorer.toLowerCase() === top_scorer.toLowerCase()) points += 10;
+
+      // Gols do artilheiro
+      const predGoals = pred.top_scorer_goals ?? pred.predicted_total_goals;
+      if (predGoals !== null && predGoals !== undefined) {
+        const diff = Math.abs(Number(predGoals) - Number(top_scorer_goals));
+        if (diff === 0) points += 10;
+        else if (diff === 1) points += 7;
+        else if (diff === 2) points += 5;
+      }
+
+      // Melhor jogador (usando best_player do banco)
+      if (pred.best_player && best_player &&
+          pred.best_player.toLowerCase() === best_player.toLowerCase()) points += 10;
+
+      // Melhor goleiro (usando best_goalkeeper do banco)
+      const predGoalkeeper = pred.best_goalkeeper_player || pred.best_goalkeeper;
+      if (predGoalkeeper && best_goalkeeper &&
+          predGoalkeeper.toLowerCase() === best_goalkeeper.toLowerCase()) points += 8;
+
+      // Revelação (usando tournament_revelation ou best_young do banco)
+      const predRevelation = pred.tournament_revelation || pred.best_young;
+      if (predRevelation && revelation &&
+          predRevelation.toLowerCase() === revelation.toLowerCase()) points += 7;
+
+      // Atualizar pontos de pré-copa
+      await serverSupabase
+        .from("pre_copa_predictions")
+        .update({ pre_copa_points: points })
+        .eq("id", pred.id);
+
+      updatedUsers++;
     }
 
-    // Recalculate rankings for all affected users
-    const userIds = [...new Set(predictions.map((p) => p.user_id))];
+    // Atualizar ranking de todos
+    await serverSupabase.rpc;
+    const { data: allUsers } = await serverSupabase
+      .from("pre_copa_predictions")
+      .select("user_id, pre_copa_points");
 
-    for (const userId of userIds) {
-      const { data: userPreds } = await supabase
+    for (const u of allUsers || []) {
+      const { data: matchPreds } = await serverSupabase
         .from("predictions")
-        .select("points")
-        .eq("user_id", userId);
+        .select("points, match_id");
 
-      const matchPoints = userPreds?.reduce((sum, p) => sum + (p.points || 0), 0) || 0;
+      const { data: matches } = await serverSupabase
+        .from("matches")
+        .select("id")
+        .eq("is_finished", true);
 
-      const { data: preCopaData } = await supabase
-        .from("pre_copa_predictions")
-        .select("points")
-        .eq("user_id", userId)
-        .single();
+      const finishedIds = new Set((matches || []).map((m: any) => m.id));
+      const matchTotal = (matchPreds || [])
+        .filter((p: any) => finishedIds.has(p.match_id))
+        .reduce((sum: number, p: any) => sum + (Number(p.points) || 0), 0);
 
-      const preCopaPoints = preCopaData?.points || 0;
-      const totalPoints = matchPoints + preCopaPoints;
+      const total = matchTotal + (Number(u.pre_copa_points) || 0);
 
-      await supabase
+      await serverSupabase
         .from("rankings")
-        .upsert(
-          {
-            user_id: userId,
-            total_points: totalPoints,
-            pre_copa_points: preCopaPoints,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "user_id" }
-        );
+        .update({ total_points: total })
+        .eq("user_id", u.user_id);
     }
 
     return NextResponse.json({
       success: true,
-      message: "Official pre-Copa outcomes updated and rankings recalculated",
-      updatedUsers: predictions.length,
+      message: "Pre-Copa outcomes saved and users scored",
+      updatedUsers,
     });
   } catch (err) {
     return NextResponse.json(
