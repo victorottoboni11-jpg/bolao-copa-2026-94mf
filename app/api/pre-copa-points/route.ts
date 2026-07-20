@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
-import { getServerSupabase } from "../../../lib/serverSupabase";
+import { supabase } from "../../lib/supabase";
 
 export async function GET() {
   try {
-    const serverSupabase = getServerSupabase();
-    const { data, error } = await serverSupabase
+    const { data, error } = await supabase
       .from("pre_copa_predictions")
       .select("user_id, pre_copa_points");
 
