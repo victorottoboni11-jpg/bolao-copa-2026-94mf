@@ -6,18 +6,20 @@ import { useAuth } from "@/app/lib/auth";
 import { fetchRanking } from "@/app/lib/rankings";
 import type { RankingEntry } from "@/app/types";
 
-type RankingTab = "geral" | "grupos" | "matamata";
+type RankingTab = "geral" | "grupos" | "matamata" | "precopa";
 
 const TAB_LABELS: Record<RankingTab, string> = {
   geral: "Unificado",
   grupos: "Fase de Grupos",
   matamata: "Mata-Mata",
+  precopa: "Pré-Copa",
 };
 
 const TAB_POINTS_KEY: Record<RankingTab, keyof RankingEntry> = {
   geral: "total_points",
   grupos: "group_stage_points",
   matamata: "knockout_points",
+  precopa: "pre_copa_points",
 };
 
 export default function RankingPage() {
