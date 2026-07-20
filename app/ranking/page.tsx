@@ -38,15 +38,16 @@ export default function RankingPage() {
         const data = await fetchRanking();
         setRanking(data);
 
-        // Buscar pontos de pré-copa separadamente
-        const { data: preCopaData } = await supabase
-          .from("pre_copa_predictions")
-          .select("user_id, pre_copa_points");
-        const map: Record<string, number> = {};
-        (preCopaData || []).forEach((pc: any) => {
-          map[pc.user_id] = pc.pre_copa_points || 0;
-        });
-        setPreCopaMap(map);
+        // Buscar pontos de pré-copa via API (service_role para evitar RLS)
+        const pcRes = await fetch("/api/pre-copa-points");
+        if (pcRes.ok) {
+          const pcJson = await pcRes.json();
+          const map: Record<string, number> = {};
+          (pcJson.data || []).forEach((pc: any) => {
+            map[pc.user_id] = pc.pre_copa_points || 0;
+          });
+          setPreCopaMap(map);
+        }
       } catch (err) {
         console.error("Erro ao carregar ranking:", err);
         setRanking([]);
