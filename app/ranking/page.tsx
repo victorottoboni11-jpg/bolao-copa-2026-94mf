@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/app/lib/auth";
 import { fetchRanking } from "@/app/lib/rankings";
+import { supabase } from "@/app/lib/supabase";
 import type { RankingEntry } from "@/app/types";
 
 type RankingTab = "geral" | "grupos" | "matamata" | "precopa";
@@ -27,6 +28,7 @@ export default function RankingPage() {
   const [ranking, setRanking] = useState<RankingEntry[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [activeTab, setActiveTab] = useState<RankingTab>("geral");
+  const [preCopaMap, setPreCopaMap] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!user) return;
@@ -35,6 +37,16 @@ export default function RankingPage() {
       try {
         const data = await fetchRanking();
         setRanking(data);
+
+        // Buscar pontos de pré-copa separadamente
+        const { data: preCopaData } = await supabase
+          .from("pre_copa_predictions")
+          .select("user_id, pre_copa_points");
+        const map: Record<string, number> = {};
+        (preCopaData || []).forEach((pc: any) => {
+          map[pc.user_id] = pc.pre_copa_points || 0;
+        });
+        setPreCopaMap(map);
       } catch (err) {
         console.error("Erro ao carregar ranking:", err);
         setRanking([]);
@@ -48,13 +60,20 @@ export default function RankingPage() {
 
   // Reordenar o ranking conforme a aba selecionada
   const sortedRanking = useMemo(() => {
+    if (activeTab === "precopa") {
+      return [...ranking].sort((a, b) => {
+        const ap = preCopaMap[a.user_id] || 0;
+        const bp2 = preCopaMap[b.user_id] || 0;
+        return bp2 - ap;
+      });
+    }
     const key = TAB_POINTS_KEY[activeTab];
     return [...ranking].sort((a, b) => {
       const diff = (b[key] as number) - (a[key] as number);
       if (diff !== 0) return diff;
       return b.exact_scores - a.exact_scores;
     });
-  }, [ranking, activeTab]);
+  }, [ranking, activeTab, preCopaMap]);
 
   if (loading || !user) {
     return (
@@ -67,7 +86,7 @@ export default function RankingPage() {
     );
   }
 
-  const pointsKey = TAB_POINTS_KEY[activeTab];
+  const pointsKey = activeTab !== "precopa" ? TAB_POINTS_KEY[activeTab] : "total_points";
 
   return (
     <main className="min-h-full bg-[radial-gradient(circle_at_top,_rgba(0,255,178,0.14),_transparent_28%),_linear-gradient(180deg,#04070f_0%,#070b16_100%)] px-4 py-8 text-white">
@@ -163,7 +182,7 @@ export default function RankingPage() {
 
                     <div className="text-right">
                       <p className="font-bold text-[#00ffb2] text-lg">
-                        {entry[pointsKey] as number}
+                        {activeTab === "precopa" ? (preCopaMap[entry.user_id] || 0) : (entry[pointsKey] as number)}
                       </p>
                     </div>
 
